@@ -1,4 +1,4 @@
-
+import numpy as np
 STR_UP = "up"
 STR_DOWN = "down"
 STR_LEFT = "left"
@@ -6,12 +6,19 @@ STR_RIGHT = "right"
 
 DISTANCES_STR = [STR_UP, STR_DOWN, STR_LEFT, STR_RIGHT]
 
+MOVE_UP = np.array([0, -1], dtype=np.uint16)
+MOVE_DOWN = np.array([0, 1])
+MOVE_LEFT = np.array([-1, 0])
+MOVE_RIGHT = np.array([1, 0])
+
+
 MOVEMENTS = {
-    STR_UP : [0, -1],
-    STR_DOWN : [0, 1],
-    STR_LEFT : [-1, 0],
-    STR_RIGHT : [1, 0]
+    STR_UP : MOVE_UP,
+    STR_DOWN : MOVE_DOWN,
+    STR_LEFT : MOVE_LEFT,
+    STR_RIGHT : MOVE_RIGHT
 }
+
 VALID_MOVEMENTS = {
     STR_UP  : [STR_UP, STR_LEFT, STR_RIGHT],
     STR_DOWN : [STR_DOWN, STR_LEFT, STR_RIGHT],
