@@ -27,3 +27,4 @@ VALID_MOVEMENTS = {
 }
 
 
+PI2 = np.pi*2

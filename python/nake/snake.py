@@ -2,6 +2,7 @@ import numpy as np
 import consts
 from exceptions import InvalidDirection,InvalidMove
 from logging import debug
+from scipy.spatial.distance import cdist
 
 
 class Snake():
@@ -40,6 +41,11 @@ class Snake():
 
         return cls(_positions.shape[0]-length, length, direction, _positions)
 
+
+    @property
+    def headPosition(self):
+        """ Returns the current head position """
+        return self.positions[0] #TODO Maybe faster to store head view in arr
 
     def updatePositionalView(self):
         """ Updates the positional arr view"""
@@ -119,21 +125,54 @@ logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 import time
-snake = Snake.initializeAtPosition((10,10), direction=consts.STR_UP, length=4)
+snake = Snake.initializeAtPosition((50,50), direction=consts.STR_UP, length=2000)
 a = time.time()
-for i in range(10000):
-    snake.moveLeft(feed=False)
-    snake.moveRight(feed=False)
-    if snake.hasHeadCollidedWithBody():
-        print ("Collided")
-        quit()
+#for i in range(100):
+snake.moveLeft(feed=False)
+snake.moveLeft(feed=False)
+
+snake.moveDown(feed=False)
+snake.moveDown(feed=False)
+snake.moveRight(feed=False)
+
+
+
     #quit()
 print (time.time()-a)
 print (snake.length)
 
 
 
+self = snake
+a = time.time()
+#aa = 2 * np.pi
+
+angles = range(0,361,45)
+
+distances = np.ones(len(angles))*-1
+
+for i in range(10000):
+    distances[:] = -1
+
+    # Getting angle
+    diff =self.positions[1:]-self.positions[0]
+    ang = np.arctan2(diff[:,0], diff[:,1])
+    val = np.rad2deg(ang % consts.PI2)
+
+    for idx, angle in enumerate(angles):
+        idxs = np.where(val == angle)[0]
+        if idxs.shape[0]:
+            dist = np.sqrt(diff[idxs, 0] ** 2 + diff[idxs, 1] ** 2)
+            distances[idx] = min(dist)
 
 
 
+    #dist = np.sqrt(diff[:,0]**2 + diff[:,1]**2)
+    #dist = cdist(self.positions[1:], self.positions[:1])
 
+    #quit()
+
+
+#print (dist[::-1])
+print (time.time()-a)
+print (distances)
