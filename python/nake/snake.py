@@ -117,6 +117,28 @@ class Snake():
         return self.move(consts.STR_RIGHT, **kwargs)
 
 
+    def getDistance2Self(self, angles, distances=None):
+        """ Returns the distance to itself"""
+        if distances is None:
+            distances = np.ones(len(angles))*-1
+
+        # Getting angle
+        diff =self.positions[1:]-self.positions[0]
+        ang = np.arctan2(diff[:,0], diff[:,1])
+        val = np.rad2deg(ang % consts.PI2)
+
+        #dist = cdist(self.positions[1:], self.positions[:1])
+        dist = np.sqrt(diff[:,0]**2 + diff[:,1]**2)
+        for idx, angle in enumerate(angles):
+            idxs = np.where(val == angle)[0]
+            if idxs.shape[0]:
+                distances[idx] = np.min(dist[idxs])
+
+        return distances
+
+
+
+
 
 
 
@@ -125,7 +147,7 @@ logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 import time
-snake = Snake.initializeAtPosition((50,50), direction=consts.STR_UP, length=2000)
+snake = Snake.initializeAtPosition((50,50), direction=consts.STR_UP, length=100)
 a = time.time()
 #for i in range(100):
 snake.moveLeft(feed=False)
@@ -134,6 +156,7 @@ snake.moveLeft(feed=False)
 snake.moveDown(feed=False)
 snake.moveDown(feed=False)
 snake.moveRight(feed=False)
+#snake.moveRight(feed=False)
 
 
 
@@ -149,28 +172,11 @@ a = time.time()
 
 angles = range(0,361,45)
 
-distances = np.ones(len(angles))*-1
+#distances = np.ones(len(angles))*-1
 
 for i in range(10000):
-    distances[:] = -1
+    distances = snake.getDistance2Self(angles)
 
-    # Getting angle
-    diff =self.positions[1:]-self.positions[0]
-    ang = np.arctan2(diff[:,0], diff[:,1])
-    val = np.rad2deg(ang % consts.PI2)
-
-    for idx, angle in enumerate(angles):
-        idxs = np.where(val == angle)[0]
-        if idxs.shape[0]:
-            dist = np.sqrt(diff[idxs, 0] ** 2 + diff[idxs, 1] ** 2)
-            distances[idx] = min(dist)
-
-
-
-    #dist = np.sqrt(diff[:,0]**2 + diff[:,1]**2)
-    #dist = cdist(self.positions[1:], self.positions[:1])
-
-    #quit()
 
 
 #print (dist[::-1])
