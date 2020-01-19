@@ -25,7 +25,7 @@ class Snake():
     def initializeAtPosition(cls, position, direction=consts.STR_DOWN, length=6):
         """ Starts from (x,y) moving in direction with length"""
 
-        _positions = np.ones([max(length*2, 64), 2], dtype=cls.POS_DTYPE)*-1
+        _positions = np.ones([max(length*2+1, 64), 2], dtype=cls.POS_DTYPE)*-1
         _positions[-length:] = position
 
         if direction.lower() == consts.STR_UP:
@@ -153,7 +153,7 @@ logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 import time
-snake = Snake.initializeAtPosition((50,50), direction=consts.STR_UP, length=200)
+snake = Snake.initializeAtPosition((50,50), direction=consts.STR_UP, length=20)
 a = time.time()
 #for i in range(100):
 snake.moveLeft(feed=True)
