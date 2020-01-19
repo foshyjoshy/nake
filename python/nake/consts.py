@@ -6,10 +6,10 @@ STR_RIGHT = "right"
 
 DISTANCES_STR = [STR_UP, STR_DOWN, STR_LEFT, STR_RIGHT]
 
-MOVE_UP = np.array([0, -1], dtype=np.uint16)
-MOVE_DOWN = np.array([0, 1])
-MOVE_LEFT = np.array([-1, 0])
-MOVE_RIGHT = np.array([1, 0])
+MOVE_UP = np.array([0, -1], dtype=np.float16)
+MOVE_DOWN = np.array([0, 1], dtype=np.float16)
+MOVE_LEFT = np.array([-1, 0], dtype=np.float16)
+MOVE_RIGHT = np.array([1, 0], dtype=np.float16)
 
 
 MOVEMENTS = {
