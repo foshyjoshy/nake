@@ -7,11 +7,9 @@ from scipy.spatial.distance import cdist
 
 class Snake():
 
-    POS_DTYPE = np.float16
-
     def __init__(self, headIdx, length, direction, positions):
-        if not positions.dtype == self.POS_DTYPE:
-            TypeError('{} dtype arr expected'.format(self.POS_DTYPE))
+        if not positions.dtype == consts.DTYPE_SNAKE:
+            TypeError('{} dtype arr expected'.format(consts.DTYPE_SNAKE))
 
         self.headIdx = headIdx
         self.length = length
@@ -25,17 +23,17 @@ class Snake():
     def initializeAtPosition(cls, position, direction=consts.STR_DOWN, length=6):
         """ Starts from (x,y) moving in direction with length"""
 
-        _positions = np.ones([max(length*2+1, 64), 2], dtype=cls.POS_DTYPE)*-1
+        _positions = np.ones([max(length*2+1, 64), 2], dtype=consts.DTYPE_SNAKE)*-1
         _positions[-length:] = position
 
         if direction.lower() == consts.STR_UP:
-            _positions[-length:, 1]+=np.arange(length, dtype=cls.POS_DTYPE)
+            _positions[-length:, 1]+=np.arange(length, dtype=consts.DTYPE_SNAKE)
         elif direction.lower() == consts.STR_DOWN:
-            _positions[-length, 1]-=np.arange(length, dtype=cls.POS_DTYPE)
+            _positions[-length, 1]-=np.arange(length, dtype=consts.DTYPE_SNAKE)
         elif direction.lower() == consts.STR_LEFT:
-            _positions[-length, 0] += np.arange(length, dtype=cls.POS_DTYPE)
+            _positions[-length, 0] += np.arange(length, dtype=consts.DTYPE_SNAKE)
         elif direction.lower() == consts.STR_RIGHT:
-            _positions[-length, 0] -= np.arange(length, dtype=cls.POS_DTYPE)
+            _positions[-length, 0] -= np.arange(length, dtype=consts.DTYPE_SNAKE)
         else:
             raise Exception("{} it not a valid direction... using one of {}".format(direction, consts.DISTANCES_STR))
 
@@ -119,16 +117,21 @@ class Snake():
 
 
     def getDistance2Self(self, angles, distances=None):
-        """ Returns the distance to itself"""
+        """ Returns the distance to itself
+            0 == Right
+            90 == Down
+            180 == Left
+            270 == Up
+        """
         if distances is None:
             distances = np.ones(len(angles))*-1
 
         # Getting angle
-        diff =(self.positions[1:]-self.positions[0]).astype(np.float64)
+        diff =(self.positions[1:]-self.positions[0])#.astype(np.float32)
         ang = np.arctan2(diff[:,0], diff[:,1])
         val = np.rad2deg(ang % consts.PI2)
-        dist = cdist(self.positions[1:], self.positions[:1])
-        #dist = np.sqrt(diff[:,0]**2 + diff[:,1]**2)
+        #dist = cdist(self.positions[1:], self.positions[:1])
+        dist = np.sqrt(diff[:,0]**2 + diff[:,1]**2)
         for idx, angle in enumerate(angles):
             idxs = np.where(val == angle)[0]
             if idxs.shape[0]:
@@ -153,18 +156,18 @@ logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 import time
-snake = Snake.initializeAtPosition((50,50), direction=consts.STR_UP, length=20)
+snake = Snake.initializeAtPosition((50,50), direction=consts.STR_UP, length=100)
 a = time.time()
 #for i in range(100):
 snake.moveLeft(feed=True)
 snake.moveLeft(feed=True)
 #snake.moveLeft(feed=True)
 
-snake.moveDown(feed=True)
-snake.moveDown(feed=True)
 #snake.moveDown(feed=True)
-snake.moveRight(feed=True)
+snake.moveDown(feed=True)
+snake.moveDown(feed=True)
 #snake.moveRight(feed=True)
+snake.moveRight(feed=True)
 snake.moveUp(feed=True)
 
 
@@ -173,7 +176,7 @@ snake.moveUp(feed=True)
 
 
 
-
+print (consts.DTYPE_SNAKE)
 
 #
 self = snake
