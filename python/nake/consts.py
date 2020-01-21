@@ -7,7 +7,7 @@ STR_DOWN = "down"
 STR_LEFT = "left"
 STR_RIGHT = "right"
 
-DISTANCES_STR = [STR_UP, STR_DOWN, STR_LEFT, STR_RIGHT]
+MOVE_STR = [STR_UP, STR_DOWN, STR_LEFT, STR_RIGHT]
 
 
 
@@ -32,3 +32,5 @@ VALID_MOVEMENTS = {
 }
 
 PI2 = np.pi*2
+
+BASICBRAIN_ANGLES = range(0, 361, 45)

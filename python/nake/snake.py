@@ -25,12 +25,12 @@ class Snake():
 
 
     def __str__(self):
-        return "Snake name:{} headPos:{} length:{} movesRemaining:{}"\
-            .format(self.name, self.headPosition, self.length, self.movesRemaining)
+        return "Snake name:{} headPos:{} direction:{} length:{} remaining moves:{}"\
+            .format(self.name, self.headPosition, self.direction, self.length, self.movesRemaining)
 
 
     @classmethod
-    def initializeAtPosition(cls, position, direction=consts.STR_DOWN, length=6):
+    def initializeAtPosition(cls, position, direction=consts.STR_DOWN, length=4, **kwargs):
         """ Starts from (x,y) moving in direction with length"""
 
         _positions = np.ones([max(length*2+1, 64), 2], dtype=consts.DTYPE_SNAKE)*-1
@@ -39,15 +39,15 @@ class Snake():
         if direction.lower() == consts.STR_UP:
             _positions[-length:, 1]+=np.arange(length, dtype=consts.DTYPE_SNAKE)
         elif direction.lower() == consts.STR_DOWN:
-            _positions[-length, 1]-=np.arange(length, dtype=consts.DTYPE_SNAKE)
+            _positions[-length:, 1]-=np.arange(length, dtype=consts.DTYPE_SNAKE)
         elif direction.lower() == consts.STR_LEFT:
-            _positions[-length, 0] += np.arange(length, dtype=consts.DTYPE_SNAKE)
+            _positions[-length:, 0] += np.arange(length, dtype=consts.DTYPE_SNAKE)
         elif direction.lower() == consts.STR_RIGHT:
-            _positions[-length, 0] -= np.arange(length, dtype=consts.DTYPE_SNAKE)
+            _positions[-length:, 0] -= np.arange(length, dtype=consts.DTYPE_SNAKE)
         else:
             raise Exception("{} it not a valid direction... using one of {}".format(direction, consts.DISTANCES_STR))
 
-        return cls(_positions.shape[0]-length, length, direction, _positions)
+        return cls(_positions.shape[0]-length, length, direction, _positions, **kwargs)
 
     @property
     def hasBrain(self):
@@ -104,7 +104,7 @@ class Snake():
 
         self.headIdx -= 1
         self._positions[self.headIdx] = self._positions[self.headIdx+1]+consts.MOVEMENTS[direction]
-
+        self.direction = direction
 
         # Check if we need increase the snake length
         if feed:
@@ -112,6 +112,8 @@ class Snake():
 
         # Update view to stay in sync
         self.updatePositionalView()
+        # Update our remaining moves
+        self.movesRemaining-=1
 
 
     def moveUp(self, **kwargs):
@@ -130,6 +132,16 @@ class Snake():
         """ Moves the snake right"""
         return self.move(consts.STR_RIGHT, **kwargs)
 
+    def getDistance2BoardEdge(self, width, height, distances=None):
+        """ Returns the four distance to the walls"""
+        if distances is None:
+            distances = np.ones(len(angles), dtype=np.float32)*-1
+
+        distances[:2] = (width, height)-self.headPosition
+        distances[2:4] = (width, height)-distances[:2]
+
+        return distances
+
 
     def getDistance2Self(self, angles, distances=None):
         """ Returns the distance to itself
@@ -139,13 +151,14 @@ class Snake():
             270 == Up
         """
         if distances is None:
-            distances = np.ones(len(angles))*-1
+            distances = np.ones(len(angles), dtype=np.float32)*-1
 
         # Getting angle
-        diff =(self.positions[1:]-self.positions[0])#.astype(np.float32)
+        diff =(self.positions[1:]-self.positions[0]).astype(np.float32)
+
         ang = np.arctan2(diff[:,0], diff[:,1])
         val = np.rad2deg(ang % consts.PI2)
-        dist = cdist(self.positions[1:], self.positions[:1])
+        #dist = cdist(self.positions[1:], self.positions[:1])
         dist = np.sqrt(diff[:,0]**2 + diff[:,1]**2)
         for idx, angle in enumerate(angles):
             idxs = np.where(val == angle)[0]
@@ -155,14 +168,32 @@ class Snake():
         return distances
 
 
+    # def computeScore(self): #TODO may be in a different class
+    #     """ Using current values to compute score of snake"""
 
-    def computeScore(self):
-        """ Using current values to compute score of snake"""
+    def computeMove(self, board, foodPosition):
+        """ compute brain"""
 
-    def computeMove(self, board):
-        """ Run brain """
+        input_arr = np.zeros([14])
+        input_arr[:] = 999
+
         if not self.hasBrain:
             raise Exception("Snake has missing brain. Unable to think")
+
+        # Getting distances to wall (4)
+        self.getDistance2BoardEdge(board.width, board.height, distances=input_arr[:4])
+
+        # Getting moves to food
+        input_arr[4:6] = foodPosition-self.headPosition
+
+        # Getting distances to self (8)
+        self.getDistance2Self(consts.BASICBRAIN_ANGLES, distances=input_arr[5:14])
+
+        # Computing move
+        moveIdx = self.brain.compute(input_arr[...,None])
+
+        # Running move
+        self.move(consts.MOVE_STR[moveIdx])
 
 
 
@@ -178,39 +209,36 @@ class Snake():
 
 
 
+if __name__ == "__main__":
 
 
+    import logging
+    logging.basicConfig(level=logging.DEBUG)
+    logger = logging.getLogger(__name__)
+
+    import time
+    snake = Snake.initializeAtPosition((50,50), direction=consts.STR_UP, length=100)
+    a = time.time()
+    print (snake)
+    snake.moveLeft(feed=True)
+    snake.moveLeft(feed=True)
+    snake.moveLeft(feed=True)
+    snake.moveDown(feed=True)
+    snake.moveDown(feed=True)
+    snake.moveDown(feed=True)
+    snake.moveRight(feed=True)
+    snake.moveRight(feed=True)
+    snake.moveUp(feed=True)
+    print (snake)
 
 
-import logging
-logging.basicConfig(level=logging.DEBUG)
-logger = logging.getLogger(__name__)
-
-import time
-snake = Snake.initializeAtPosition((50,50), direction=consts.STR_UP, length=100)
-a = time.time()
-print (snake)
-snake.moveLeft(feed=True)
-snake.moveLeft(feed=True)
-snake.moveLeft(feed=True)
-snake.moveDown(feed=True)
-snake.moveDown(feed=True)
-snake.moveDown(feed=True)
-snake.moveRight(feed=True)
-snake.moveRight(feed=True)
-snake.moveUp(feed=True)
-print (snake)
-quit()
-
-
-
-self = snake
-#
-a = time.time()
-diff = self.positions[1:]-self.positions[0]
-distances = np.ones([8])*-1
-angles = range(0, 361, 45)
-for i in range(10000):
-    aa = self.getDistance2Self(angles, distances)
-print (time.time()-a)
-print (distances)
+    self = snake
+    #
+    a = time.time()
+    diff = self.positions[1:]-self.positions[0]
+    distances = np.ones([8])*-1
+    angles = range(0, 361, 45)
+    for i in range(10000):
+        aa = self.getDistance2Self(angles, distances)
+    print (time.time()-a)
+    print (distances)
