@@ -7,16 +7,26 @@ from scipy.spatial.distance import cdist
 
 class Snake():
 
-    def __init__(self, headIdx, length, direction, positions):
+
+    def __init__(self, headIdx, length, direction,
+                 positions, brain=None, movesRemaining=200, name=None):
         if not positions.dtype == consts.DTYPE_SNAKE:
             TypeError('{} dtype arr expected'.format(consts.DTYPE_SNAKE))
 
+        self.brain = brain
         self.headIdx = headIdx
         self.length = length
         self.direction = direction
         self._positions = positions
+        self.movesRemaining = movesRemaining
+        self.name = name or ""
 
         self.updatePositionalView()
+
+
+    def __str__(self):
+        return "Snake name:{} headPos:{} length:{} movesRemaining:{}"\
+            .format(self.name, self.headPosition, self.length, self.movesRemaining)
 
 
     @classmethod
@@ -39,6 +49,10 @@ class Snake():
 
         return cls(_positions.shape[0]-length, length, direction, _positions)
 
+    @property
+    def hasBrain(self):
+        """ Returns if we have set a brain for not"""
+        return self.brain is not None
 
     @property
     def headPosition(self):
@@ -62,11 +76,12 @@ class Snake():
         """Returns if the current head position has collided with its body"""
         return np.any(np.all(self.positions[0] == self.positions[1:], axis=1))
 
-    def feed(self, updateArrView=True):
+    def feed(self, updateArrView=True, increaseMovesBy=100):
         """ Feeds snake a piece of fruit"""
         self.length += 1
         if updateArrView:
             self.updatePositionalView()
+        self.movesRemaining+=increaseMovesBy
 
     def move(self, direction=None, feed=False):
         """ Moves snake along this direction"""
@@ -130,7 +145,7 @@ class Snake():
         diff =(self.positions[1:]-self.positions[0])#.astype(np.float32)
         ang = np.arctan2(diff[:,0], diff[:,1])
         val = np.rad2deg(ang % consts.PI2)
-        #dist = cdist(self.positions[1:], self.positions[:1])
+        dist = cdist(self.positions[1:], self.positions[:1])
         dist = np.sqrt(diff[:,0]**2 + diff[:,1]**2)
         for idx, angle in enumerate(angles):
             idxs = np.where(val == angle)[0]
@@ -140,7 +155,23 @@ class Snake():
         return distances
 
 
-    def view(self, boardSize=[64, 64]):
+
+    def computeScore(self):
+        """ Using current values to compute score of snake"""
+
+    def computeMove(self, board):
+        """ Run brain """
+        if not self.hasBrain:
+            raise Exception("Snake has missing brain. Unable to think")
+
+
+
+
+
+
+
+
+    def view(self, board):
         """ Simple view of the snake"""
 
 
@@ -158,64 +189,21 @@ logger = logging.getLogger(__name__)
 import time
 snake = Snake.initializeAtPosition((50,50), direction=consts.STR_UP, length=100)
 a = time.time()
-#for i in range(100):
+print (snake)
 snake.moveLeft(feed=True)
 snake.moveLeft(feed=True)
-#snake.moveLeft(feed=True)
-
-#snake.moveDown(feed=True)
+snake.moveLeft(feed=True)
 snake.moveDown(feed=True)
 snake.moveDown(feed=True)
-#snake.moveRight(feed=True)
+snake.moveDown(feed=True)
+snake.moveRight(feed=True)
 snake.moveRight(feed=True)
 snake.moveUp(feed=True)
+print (snake)
+quit()
 
 
 
-
-
-
-
-print (consts.DTYPE_SNAKE)
-
-#
-self = snake
-#
-a = time.time()
-diff = self.positions[1:]-self.positions[0]
-#
-
-distances = np.ones([8])*-1
-for i in range(10000):
-    diff = self.positions[1:] - self.positions[0]
-
-    upIdx = np.where((diff[:,0]<=0) * (diff[:,0]==0))[0]
-    if upIdx.shape[0]:
-        distances[0] = np.max(diff[upIdx,1])*-1
-    rightUpIdx = np.where((-diff[:,0]==diff[:,1]) * (diff[:,0] >= 0))[0]
-    if rightUpIdx.shape[0]:
-        distances[1] = np.min(diff[rightUpIdx, 1])*-1
-    rightIdx = np.where((diff[:,0]>=0) * (diff[:,1]==0))[0]
-    if rightIdx.shape[0]:
-        distances[2] = np.min(diff[rightIdx, 0])
-    rightDownIdx = np.where((diff[:,0]==diff[:,1]) * (diff[:,0] >= 0))[0]
-    if rightDownIdx.shape[0]:
-        distances[3] = np.min(diff[rightDownIdx, 0])
-    downIdx = np.where((diff[:,0]==0) * (diff[:,1]>=0))[0]
-    if downIdx.shape[0]:
-       distances[4] = np.min(diff[downIdx, 1])
-    leftDownIdx = np.where((diff[:,0]==-diff[:,1]) * (diff[:,0] <= 0))[0]
-    if leftDownIdx.shape[0]:
-       distances[5] = np.min(diff[leftDownIdx, 1])
-    leftIdx = np.where((diff[:,0]<=0) * (diff[:,1]==0))[0]
-    if leftIdx.shape[0]:
-       distances[6] = np.max(diff[leftIdx, 0])*-1
-    leftUpIdx = np.where((diff[:,0]==diff[:,1]) * (diff[:,0] <= 0))[0]
-    if leftUpIdx.shape[0]:
-       distances[7] = np.max(diff[leftUpIdx, 0])*-1
-
-print (time.time()-a)
-print (distances)
 self = snake
 #
 a = time.time()

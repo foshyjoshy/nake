@@ -31,5 +31,4 @@ VALID_MOVEMENTS = {
     STR_RIGHT : [STR_DOWN, STR_UP, STR_RIGHT],
 }
 
-
 PI2 = np.pi*2

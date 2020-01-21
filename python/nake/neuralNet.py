@@ -35,39 +35,3 @@ class Layer():
         values = np.matmul(self.weights, inputs) + self.biases
         outputs = self.activation(values)
         return outputs
-
-"""
-n_inputs = 24
-n_outputs = 16
-n_hidden = 2
-
-
-
-
-
-
-inputs = np.random.randint(0, 20, [n_inputs, 1])
-
-layer1 = Layer(n_inputs, n_outputs)
-layer2 = Layer(n_outputs, n_outputs)
-layer3 = Layer(n_outputs, 4)
-"""
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

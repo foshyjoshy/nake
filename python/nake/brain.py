@@ -1,27 +1,62 @@
 import logging
 import numpy as np
 from neuralNet import Layer
-
 import time
 
-n_inputs = 24
-n_outputs = 16
 
-inputs = np.random.randint(0, 20, [n_inputs, 1])
+class Brain():
+    """ Basic snake brain"""
 
-layer1 = Layer("hidden_1", n_inputs, n_outputs)
-layer2 = Layer("hidden_2", n_outputs, n_outputs)
-layer3 = Layer("ouput", n_outputs, 4)
+    def __init__(self, n_inputs=14, n_hidden_inputs=16, n_outputs=4):
+        super().__init__()
+
+        self.layers = [
+                Layer("input_layer", n_inputs, n_hidden_inputs),
+                Layer("hidden_00", n_hidden_inputs, n_hidden_inputs),
+                Layer("hidden_01", n_hidden_inputs, n_hidden_inputs),
+                Layer("output_layer", n_hidden_inputs, n_outputs),
+                     ]
+
+    @property
+    def n_inputs(self):
+        """ Returns """
+        return self.layers[0].n_inputs
+
+    @property
+    def n_outputs(self):
+        """ Returns """
+        return self.layers[-1].n_outputs
+
+    def generateRandomInputs(self, minval=0, maxval=20):
+        """ Generate random inputs values for testing"""
+        return np.random.randint(minval, maxval, [self.n_inputs, 1])
+
+    def compute(self, inputs):
+        """ Runs the input values through the network"""
+        for layer in self.layers:
+            inputs = layer.compute(inputs)
+        return np.argmax(inputs)
+
+    def crossover(self, brain2):
+        """ Mixes two brains together"""
+        pass
+
+    def mutate(self, percent=5):
+        """ Mutates a percentage of the non-locked networks weights """
+        pass
 
 
 
-inputs = np.random.randint(0, 20, [n_inputs, 1])
-a = time.time()
 
-for i in range(10000):
-    ouput1 = layer1.compute(inputs)
-    ouput2 = layer2.compute(ouput1)
-    ouput3 = layer3.compute(ouput2)
-print (time.time()-a)
+if __name__ == "__main__":
 
+    brain = Brain()
+
+    input = brain.generateRandomInputs()
+
+    a = time.time()
+    for i in range(10000):
+        c = brain.compute(input)
+    print (time.time()-a)
+    print (c)
 
