@@ -2,18 +2,17 @@ import numpy as np
 import consts
 from exceptions import InvalidDirection,InvalidMove
 from logging import debug
-from scipy.spatial.distance import cdist
+import utils
 
 
 class Snake():
 
 
     def __init__(self, headIdx, length, direction,
-                 positions, brain=None, movesRemaining=200, name=None):
+                 positions, movesRemaining=200, name=None):
         if not positions.dtype == consts.DTYPE_SNAKE:
             TypeError('{} dtype arr expected'.format(consts.DTYPE_SNAKE))
 
-        self.brain = brain
         self.headIdx = headIdx
         self.length = length
         self.direction = direction
@@ -49,15 +48,17 @@ class Snake():
 
         return cls(_positions.shape[0]-length, length, direction, _positions, **kwargs)
 
-    @property
-    def hasBrain(self):
-        """ Returns if we have set a brain for not"""
-        return self.brain is not None
 
     @property
     def headPosition(self):
         """ Returns the current head position """
         return self.positions[0] #TODO Maybe faster to store head view in arr
+
+    @property
+    def bodyPositions(self):
+        """ Returns a view of the body positions"""
+        return self.positions[1:]
+
 
     def updatePositionalView(self):
         """ Updates the positional arr view"""
@@ -132,75 +133,14 @@ class Snake():
         """ Moves the snake right"""
         return self.move(consts.STR_RIGHT, **kwargs)
 
-    def getDistance2BoardEdge(self, width, height, distances=None):
+    def getDistance2BoardEdges(self, board, distances=None):
         """ Returns the four distance to the walls"""
-        if distances is None:
-            distances = np.ones(len(angles), dtype=np.float32)*-1
+        return board.getDistanceToBoardEdges(self.headPosition, distances=distances)
 
-        distances[:2] = (width, height)-self.headPosition
-        distances[2:4] = (width, height)-distances[:2]
-
-        return distances
-
-
-    def getDistance2Self(self, angles, distances=None):
-        """ Returns the distance to itself
-            0 == Right
-            90 == Down
-            180 == Left
-            270 == Up
-        """
-        if distances is None:
-            distances = np.ones(len(angles), dtype=np.float32)*-1
-
-        # Getting angle
-        diff =(self.positions[1:]-self.positions[0]).astype(np.float32)
-
-        ang = np.arctan2(diff[:,0], diff[:,1])
-        val = np.rad2deg(ang % consts.PI2)
-        #dist = cdist(self.positions[1:], self.positions[:1])
-        dist = np.sqrt(diff[:,0]**2 + diff[:,1]**2)
-        for idx, angle in enumerate(angles):
-            idxs = np.where(val == angle)[0]
-            if idxs.shape[0]:
-                distances[idx] = np.min(dist[idxs])
-
-        return distances
-
-
-    # def computeScore(self): #TODO may be in a different class
-    #     """ Using current values to compute score of snake"""
-
-    def computeMove(self, board, foodPosition):
-        """ compute brain"""
-
-        input_arr = np.zeros([14])
-        input_arr[:] = 999
-
-        if not self.hasBrain:
-            raise Exception("Snake has missing brain. Unable to think")
-
-        # Getting distances to wall (4)
-        self.getDistance2BoardEdge(board.width, board.height, distances=input_arr[:4])
-
-        # Getting moves to food
-        input_arr[4:6] = foodPosition-self.headPosition
-
-        # Getting distances to self (8)
-        self.getDistance2Self(consts.BASICBRAIN_ANGLES, distances=input_arr[5:14])
-
-        # Computing move
-        moveIdx = self.brain.compute(input_arr[...,None])
-
-        # Running move
-        self.move(consts.MOVE_STR[moveIdx])
-
-
-
-
-
-
-
+    def getDistance2Self(self, distances=None):
+        """ Returns the distance to itself in 45% increments """
+        return utils.distance2Body(
+            self.headPosition, self.bodyPositions, consts.ANGLES_45, distances=distances)
 
     def view(self, board):
         """ Simple view of the snake"""

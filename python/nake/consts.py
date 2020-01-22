@@ -33,4 +33,4 @@ VALID_MOVEMENTS = {
 
 PI2 = np.pi*2
 
-BASICBRAIN_ANGLES = range(0, 361, 45)
+ANGLES_45 = range(0, 361, 45)
