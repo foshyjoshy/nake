@@ -7,7 +7,7 @@ import time
 import numpy as np
 
 brain = Brain()
-snake = Snake.initializeAtPosition((31,6), direction=consts.STR_LEFT)
+snake = Snake.initializeAtPosition((31,6), direction=consts.Moves.LEFT)
 board = Board.fromDims(64, 64)
 foodPosition = (10,10)
 
@@ -22,10 +22,13 @@ for i in range(5):
     #input_arr[4:6] = foodPosition - snake.headPosition
     print (snake.getDistance2Self(distances=input_arr[5:14]))
 
-    moveIdx = brain.compute(input_arr[..., None])
-    snake.move(consts.MOVE_STR[moveIdx])
 
-    print (consts.MOVE_STR[moveIdx])
+
+    moveIdx = brain.compute(input_arr[..., None])
+    snake.move(consts.Moves(moveIdx))
+
+    print(snake.headPosition, consts.Moves(moveIdx))
+
 
 
 print (time.time()-a)

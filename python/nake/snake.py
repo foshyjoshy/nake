@@ -1,6 +1,5 @@
 import numpy as np
 import consts
-from exceptions import InvalidDirection,InvalidMove
 from logging import debug
 import utils
 
@@ -29,22 +28,22 @@ class Snake():
 
 
     @classmethod
-    def initializeAtPosition(cls, position, direction=consts.STR_DOWN, length=4, **kwargs):
+    def initializeAtPosition(cls, position, direction=consts.Moves.DOWN, length=4, **kwargs):
         """ Starts from (x,y) moving in direction with length"""
 
         _positions = np.ones([max(length*2+1, 64), 2], dtype=consts.DTYPE_SNAKE)*-1
         _positions[-length:] = position
 
-        if direction.lower() == consts.STR_UP:
+        if direction == consts.Moves.UP:
             _positions[-length:, 1]+=np.arange(length, dtype=consts.DTYPE_SNAKE)
-        elif direction.lower() == consts.STR_DOWN:
+        elif direction == consts.Moves.DOWN:
             _positions[-length:, 1]-=np.arange(length, dtype=consts.DTYPE_SNAKE)
-        elif direction.lower() == consts.STR_LEFT:
+        elif direction == consts.Moves.LEFT:
             _positions[-length:, 0] += np.arange(length, dtype=consts.DTYPE_SNAKE)
-        elif direction.lower() == consts.STR_RIGHT:
+        elif direction == consts.Moves.RIGHT:
             _positions[-length:, 0] -= np.arange(length, dtype=consts.DTYPE_SNAKE)
         else:
-            raise Exception("{} it not a valid direction... using one of {}".format(direction, consts.DISTANCES_STR))
+            raise Exception("{} it not a valid direction... using one of {}".format(direction, consts.Moves))
 
         return cls(_positions.shape[0]-length, length, direction, _positions, **kwargs)
 
@@ -88,13 +87,7 @@ class Snake():
         """ Moves snake along this direction"""
         if direction is None:
             direction = self.direction
-        ''' #Removing checks for speed
-        else:
-            if direction not in consts.MOVEMENTS:
-                raise InvalidDirection(direction)
-            if direction not in consts.VALID_MOVEMENTS[self.direction]:
-                raise InvalidMove(direction, consts.VALID_MOVEMENTS[self.direction])
-        '''
+
         if self.length*2 > self._positions.shape[0]:
             self.expand()
 
@@ -104,7 +97,7 @@ class Snake():
             self.headIdx = self._positions.shape[0]-self.length
 
         self.headIdx -= 1
-        self._positions[self.headIdx] = self._positions[self.headIdx+1]+consts.MOVEMENTS[direction]
+        self._positions[self.headIdx] = self._positions[self.headIdx+1]+direction.arr
         self.direction = direction
 
         # Check if we need increase the snake length
@@ -119,19 +112,19 @@ class Snake():
 
     def moveUp(self, **kwargs):
         """ Moves the snake up"""
-        return self.move(consts.STR_UP, **kwargs)
+        return self.move(consts.Moves.UP, **kwargs)
 
     def moveDown(self, **kwargs):
         """ Moves the snake down"""
-        return self.move(consts.STR_DOWN, **kwargs)
+        return self.move(consts.Moves.DOWN, **kwargs)
 
     def moveLeft(self, **kwargs):
         """ Moves the snake left"""
-        return self.move(consts.STR_LEFT, **kwargs)
+        return self.move(consts.Moves.LEFT, **kwargs)
 
     def moveRight(self, **kwargs):
         """ Moves the snake right"""
-        return self.move(consts.STR_RIGHT, **kwargs)
+        return self.move(consts.Moves.RIGHT, **kwargs)
 
     def getDistance2BoardEdges(self, board, distances=None):
         """ Returns the four distance to the walls"""
@@ -157,7 +150,7 @@ if __name__ == "__main__":
     logger = logging.getLogger(__name__)
 
     import time
-    snake = Snake.initializeAtPosition((50,50), direction=consts.STR_UP, length=100)
+    snake = Snake.initializeAtPosition((50,50), direction=consts.Moves.UP, length=100)
     a = time.time()
     print (snake)
     snake.moveLeft(feed=True)
@@ -177,8 +170,7 @@ if __name__ == "__main__":
     a = time.time()
     diff = self.positions[1:]-self.positions[0]
     distances = np.ones([8])*-1
-    angles = range(0, 361, 45)
     for i in range(10000):
-        aa = self.getDistance2Self(angles, distances)
+        aa = self.getDistance2Self(distances)
     print (time.time()-a)
     print (distances)
