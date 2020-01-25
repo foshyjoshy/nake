@@ -135,8 +135,14 @@ class Snake():
         return utils.distance2Body(
             self.headPosition, self.bodyPositions, consts.ANGLES_45, distances=distances)
 
-    def view(self, board):
+    def generatePreviewImage(self, board):
         """ Simple view of the snake"""
+        im = np.zeros([board.height, board.width], dtype=np.uint8)
+        im[:,:] = 0
+        im[self.headPosition[1], self.headPosition[0]] = 255
+        im[self.bodyPositions[:,1], self.bodyPositions[:,0]] = 127
+        return im
+
 
 
 

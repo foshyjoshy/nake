@@ -5,9 +5,10 @@ import consts
 
 import time
 import numpy as np
+import matplotlib.pyplot as plt
 
 brain = Brain()
-snake = Snake.initializeAtPosition((31,6), direction=consts.Moves.LEFT)
+snake = Snake.initializeAtPosition((31,6), direction=consts.Moves.DOWN)
 board = Board.fromDims(64, 64)
 foodPosition = (10,10)
 
@@ -15,14 +16,18 @@ input_arr = np.zeros([14])
 input_arr[:] = -1
 
 
+plt.ion()
 
 a = time.time()
-for i in range(5):
-    #snake.getDistance2BoardEdges(board, distances=input_arr[:4])
+for i in range(10):
+    snake.getDistance2BoardEdges(board, distances=input_arr[:4])
     #input_arr[4:6] = foodPosition - snake.headPosition
     print (snake.getDistance2Self(distances=input_arr[5:14]))
 
-
+    im= snake.generatePreviewImage(board)
+    plt.imshow(im, cmap="gray")
+    plt.pause(0.5)
+    #p()
 
     moveIdx = brain.compute(input_arr[..., None])
     snake.move(consts.Moves(moveIdx))

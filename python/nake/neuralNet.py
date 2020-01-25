@@ -11,7 +11,7 @@ class Layer():
         self.activation = activation or np.tanh
 
         # Between -1 and 1 #TODO REMOVE / n_inputs
-        self.weights = (np.random.random([n_outputs, n_inputs]) * 2 - 1) / n_inputs
+        self.weights = (np.random.random([n_outputs, n_inputs]) * 2 - 1)# / n_inputs
 
         # Between -1 and 1
         self.biases = (np.random.random([n_outputs, 1]) * 2 - 1) * 0.001
