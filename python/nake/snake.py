@@ -109,6 +109,9 @@ class Snake():
         # Update our remaining moves
         self.movesRemaining-=1
 
+        return True
+
+
 
     def moveUp(self, **kwargs):
         """ Moves the snake up"""
@@ -126,21 +129,21 @@ class Snake():
         """ Moves the snake right"""
         return self.move(consts.Moves.RIGHT, **kwargs)
 
-    def getDistance2BoardEdges(self, board, distances=None):
-        """ Returns the four distance to the walls"""
-        return board.getDistanceToBoardEdges(self.headPosition, distances=distances)
+    def moves2BoardEdges(self, board, moves=None):
+        """ Returns the number moves to the four walls"""
+        return board.movesToBoardEdges(self.headPosition, moves=moves)
 
-    def getDistance2Self(self, distances=None):
-        """ Returns the distance to itself in 45% increments """
-        return utils.distance2Body(
-            self.headPosition, self.bodyPositions, consts.ANGLES_45, distances=distances)
+    def moves2Self(self, moves=None):
+        """ Returns the number of moves to itself in 45% increments """
+        return utils.moves2Body(
+            self.headPosition, self.bodyPositions, consts.ANGLES_45, moves=moves)
 
     def generatePreviewImage(self, board):
         """ Simple view of the snake"""
         im = np.zeros([board.height, board.width], dtype=np.uint8)
         im[:,:] = 0
-        im[self.headPosition[1], self.headPosition[0]] = 255
-        im[self.bodyPositions[:,1], self.bodyPositions[:,0]] = 127
+        im[self.bodyPositions[:,1]+board.y, self.bodyPositions[:,0]+board.x] = 127
+        im[self.headPosition[1]+board.y, self.headPosition[0]+board.x] = 255
         return im
 
 
@@ -150,16 +153,47 @@ class Snake():
 
 if __name__ == "__main__":
 
+    import matplotlib.pyplot as plt
 
     import logging
-    logging.basicConfig(level=logging.DEBUG)
+    logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger(__name__)
 
+
+
+    from board import Board
+    board = Board.fromDims(10, 10)
+    print (board)
+
+
     import time
-    snake = Snake.initializeAtPosition((50,50), direction=consts.Moves.UP, length=100)
+    snake = Snake.initializeAtPosition((0,4), direction=consts.Moves.UP, length=6)
+
+
+
+
     a = time.time()
-    print (snake)
-    snake.moveLeft(feed=True)
+    snake.moveRight(feed=True)
+    snake.moveRight(feed=True)
+    snake.moveRight(feed=True)
+    snake.moveRight(feed=True)
+    snake.moveDown(feed=True)
+    snake.moveDown(feed=True)
+    snake.moveLeft()
+    snake.moveLeft()
+    snake.moveUp()
+    print(snake)
+    print (snake.moves2Self())
+    print (snake.moves2BoardEdges(board))
+    im= snake.generatePreviewImage(board)
+    plt.imshow(im, cmap="gray")
+    plt.show()
+
+
+    quit()
+
+
+
     snake.moveLeft(feed=True)
     snake.moveLeft(feed=True)
     snake.moveDown(feed=True)

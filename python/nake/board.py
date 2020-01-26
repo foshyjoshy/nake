@@ -15,6 +15,9 @@ class Board():
         """ Initialize class from width and height"""
         return cls((0,0), (width, height), *args, **kwargs)
 
+    def __str__(self):
+        return "Lefttop {} rightBottom {}".format(self.leftTop, self.rightBottom)
+
     @property
     def x(self):
         return self.leftTop[0]
@@ -31,10 +34,10 @@ class Board():
     def height(self):
         return self.rightBottom[1]-self.leftTop[1]
 
-    def getDistanceToBoardEdges(self, point, distances=None):
-        """ Returns the points distance to the edge of the board """
-        return utils.distance2RectangleEdge(
-            point, self.leftTop, self.rightBottom, distances=distances)
+    def movesToBoardEdges(self, point, moves=None):
+        """ Returns the points number of moves to the edge of the board """
+        return utils.moves2RectangleEdge(
+            point, self.leftTop, self.rightBottom, moves=moves)
 
 
 

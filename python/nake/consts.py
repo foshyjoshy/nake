@@ -3,7 +3,7 @@ from enum import Enum
 
 DTYPE_SNAKE = np.int32
 PI2 = np.pi*2
-ANGLES_45 = range(0, 361, 45)
+ANGLES_45 = range(0, 360, 45)
 
 class Moves(bytes, Enum):
 
