@@ -1,4 +1,5 @@
 import utils
+import numpy as np
 
 
 class Board():
@@ -27,12 +28,21 @@ class Board():
         return self.leftTop[1]
 
     @property
+    def x2(self):
+        return self.rightBottom[0]
+
+    @property
+    def y2(self):
+        return self.rightBottom[1]
+
+    @property
     def width(self):
         return self.rightBottom[0]-self.leftTop[0]
 
     @property
     def height(self):
         return self.rightBottom[1]-self.leftTop[1]
+
 
     def movesToBoardEdges(self, point, moves=None):
         """ Returns the points number of moves to the edge of the board """
@@ -46,5 +56,12 @@ if __name__ == "__main__":
 
     board = Board.fromDims(5, 5)
     print (board.width, board.height)
-    print (board.getDistanceToBoardEdges((3,3)))
+    print (board.movesToBoardEdges((3,3)))
 
+    r = np.random.RandomState(1234)
+    #ps = r.randint(199, size=1)
+
+    r2 = np.random.RandomState()
+    r2.set_state(r.get_state())
+    ps = r2.randint(199, size=1)
+    print (ps)
