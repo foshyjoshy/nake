@@ -1,6 +1,9 @@
 from brain import Brain
 from snake import Snake
 from board import Board
+from food import FoodGenerator
+
+
 import consts
 
 import time

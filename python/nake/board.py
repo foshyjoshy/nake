@@ -43,6 +43,9 @@ class Board():
     def height(self):
         return self.rightBottom[1]-self.leftTop[1]
 
+    @property
+    def shape(self):
+        return (self.height, self.width)
 
     def movesToBoardEdges(self, point, moves=None):
         """ Returns the points number of moves to the edge of the board """
