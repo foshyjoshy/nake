@@ -186,11 +186,11 @@ if __name__ == "__main__":
     print (snake.moves2Self())
     print (snake.moves2BoardEdges(board))
     im= snake.generatePreviewImage(board)
-    plt.imshow(im, cmap="gray")
-    plt.show()
-
-
-    quit()
+    # plt.imshow(im, cmap="gray")
+    # plt.show()
+    #
+    #
+    # quit()
 
 
 
@@ -210,7 +210,7 @@ if __name__ == "__main__":
     a = time.time()
     diff = self.positions[1:]-self.positions[0]
     distances = np.ones([8])*-1
-    for i in range(10000):
-        aa = self.getDistance2Self(distances)
+    for i in range(1000):
+        self.moveLeft()
     print (time.time()-a)
     print (distances)

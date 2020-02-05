@@ -96,14 +96,6 @@ class FoodGenerator():
 
 
 
-
-    # def __next__(self):
-    #     """ Updates current position """
-    #     self.
-
-
-
-
 if __name__ == "__main__":
 
     from board import Board
