@@ -10,6 +10,8 @@ class Board():
 
         self.leftTop = leftTop
         self.rightBottom = rightBottom
+        self.width = self.rightBottom[0]-self.leftTop[0]
+        self.height = self.rightBottom[1]-self.leftTop[1]
 
     @classmethod
     def fromDims(cls, width, height, *args, **kwargs):
@@ -35,17 +37,21 @@ class Board():
     def y2(self):
         return self.rightBottom[1]
 
-    @property
-    def width(self):
-        return self.rightBottom[0]-self.leftTop[0]
-
-    @property
-    def height(self):
-        return self.rightBottom[1]-self.leftTop[1]
+    # @property
+    # def width(self):
+    #     return self.rightBottom[0]-self.leftTop[0]
+    #
+    # @property
+    # def height(self):
+    #     return self.rightBottom[1]-self.leftTop[1]
 
     @property
     def shape(self):
         return (self.height, self.width)
+
+    @property
+    def size(self):
+        return self.width*self.height
 
     def movesToBoardEdges(self, point, moves=None):
         """ Returns the points number of moves to the edge of the board """
