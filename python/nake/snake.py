@@ -26,6 +26,8 @@ class Snake():
         return "Snake name:{} headPos:{} direction:{} length:{} remaining moves:{}"\
             .format(self.name, self.headPosition, self.direction, self.length, self.movesRemaining)
 
+    # def __array__(self):
+    #     return self.bodyPositions
 
     @classmethod
     def initializeAtPosition(cls, position, direction=consts.Moves.DOWN, length=4, **kwargs):

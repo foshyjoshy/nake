@@ -58,6 +58,12 @@ class Board():
         return utils.moves2RectangleEdge(
             point, self.leftTop, self.rightBottom, moves=moves)
 
+    def pointInside(self, point):
+        """ Checks if the point is inside or outside the board """
+        return point[0] >=  self.x and point[1] >= self.y and point[0] < self.x2 and point[1] < self.y2
+
+
+
 
 
 
