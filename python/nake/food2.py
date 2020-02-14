@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from snake import Snake
 import time
+import copy
 
 import random
 
@@ -27,12 +28,29 @@ class FoodGenerator():
         if not self.board.pointInside(pos):
             raise Exception("Starting food position is outside board")
         self.pos = np.array(pos, dtype=int)
+        self.pos.flags.writeable = False
 
     def __str__(self):
         return "FG2 {} count {}".format(self.pos,self.count)
 
-    # def __array__(self):
-    #     return self.pos
+    def __array__(self):
+        return self.pos
+
+    def copy(self, keepBoard=True):
+        """ Returns a copy of this class """
+        cls = copy.deepcopy(self)
+        if keepBoard: cls.board = self.board
+        return cls
+
+    def getInitialStateCopy(self, keepBoard=True):
+        """ Returns a copy of this class """
+        if keepBoard: board = self.board
+        else: board = copy.deepcopy(self.board)
+        return self.__class__(
+                    board,
+                    copy.deepcopy(self.pos),
+                    state=self._initialState
+                    )
 
     @property
     def shape(self):
@@ -54,6 +72,12 @@ class FoodGenerator():
         rstate.set_state(self.randomState.get_state())
         return rstate
 
+    def _setpos(self, pos):
+        """ Sets the new position of the food """
+        self.pos.flags.writeable = True
+        self.pos[:] = pos
+        self.pos.flags.writeable = False
+        self.count += 1
 
     def findNext(self, positions):
         """ Finds the next available position """
@@ -66,32 +90,35 @@ class FoodGenerator():
         self._arr[indexes] = False
 
         available_indexes = np.nonzero(self._arr)[0]
+        if not available_indexes.size:
+            raise Exception("No positions available")
+
         ridx = self.randomState.randint(0, available_indexes.shape[0])
 
-        self.pos[:] = np.unravel_index(available_indexes[ridx], self.shape)
-        self.count+=1
+        self._setpos(np.unravel_index(available_indexes[ridx], self.shape))
 
 
 
+if __name__ == "__main__":
 
+    from board import Board
+    from snake import Snake
+    import consts
 
-from board import Board
-from snake import Snake
-import consts
+    snake = Snake.initializeAtPosition((4,4), direction=consts.Moves.DOWN)
+    board = Board.fromDims(12,6)
+    food = FoodGenerator(board, (2,2))
 
-snake = Snake.initializeAtPosition((4,4), direction=consts.Moves.DOWN)
-board = Board.fromDims(6,6)
-food = FoodGenerator(board, (2,2))
+    im = snake.generatePreviewImage(board)
 
-im = snake.generatePreviewImage(board)
-a = time.time()
-for i in range(100):
-    food.findNext(snake)
-    print (food)
-    im[food.pos[0], food.pos[1]]=66
+    a = time.time()
 
-print (time.time()-a)
-plt.imshow(im, vmin=0)
-plt.colorbar()
-plt.show()
+    for i in range(10000):
+        food.findNext(snake)
+        im[food.pos[0], food.pos[1]]=66
+
+    print (time.time()-a)
+    plt.imshow(im, vmin=0)
+    plt.colorbar()
+    plt.show()
 
