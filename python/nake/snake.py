@@ -60,6 +60,12 @@ class Snake():
         """ Returns a view of the body positions"""
         return self.positions[1:]
 
+    def canMove(self):
+        """ Returns if the snake is able to move """
+        return self.movesRemaining > 0
+
+    def unableToMove(self):
+        """ Returns if the snake is unable to move"""
 
     def updatePositionalView(self):
         """ Updates the positional arr view"""

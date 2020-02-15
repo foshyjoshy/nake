@@ -22,16 +22,17 @@ class FoodGenerator():
 
         self.board = board
         self._arr = np.zeros([self.size], dtype=np.bool)
+        self._status = True
         self.count = 0
 
         # Checking if our point is inside the board.
-        if not self.board.pointInside(pos):
+        if not self.board.inside(pos):
             raise Exception("Starting food position is outside board")
         self.pos = np.array(pos, dtype=int)
         self.pos.flags.writeable = False
 
     def __str__(self):
-        return "FG2 {} count {}".format(self.pos,self.count)
+        return "FG2 {} count {} status {}".format(self.pos,self.count,self.status)
 
     def __array__(self):
         return self.pos
@@ -72,6 +73,14 @@ class FoodGenerator():
         rstate.set_state(self.randomState.get_state())
         return rstate
 
+    def isAvailable(self):
+        """ """
+        return self._status
+
+    def notAvailable(self):
+        """ """
+        return self._status == False
+
     def _setpos(self, pos):
         """ Sets the new position of the food """
         self.pos.flags.writeable = True
@@ -90,12 +99,14 @@ class FoodGenerator():
         self._arr[indexes] = False
 
         available_indexes = np.nonzero(self._arr)[0]
-        if not available_indexes.size:
-            raise Exception("No positions available")
-
-        ridx = self.randomState.randint(0, available_indexes.shape[0])
-
-        self._setpos(np.unravel_index(available_indexes[ridx], self.shape))
+        if available_indexes.size:
+            # If we have enough space for next position
+            ridx = self.randomState.randint(0, available_indexes.shape[0])
+            self._setpos(np.unravel_index(available_indexes[ridx], self.shape))
+        else:
+            # We are unable to find any available space for food.
+            self._setpos((-1, -1))
+            self._status = False
 
 
 

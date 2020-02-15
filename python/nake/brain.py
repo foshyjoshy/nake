@@ -17,6 +17,8 @@ class Brain():
                 Layer("output_layer", n_hidden_inputs, n_outputs),
                      ]
 
+        self.input_arr = self.generateRandomInputs()
+
     @property
     def n_inputs(self):
         """ Returns """
@@ -31,8 +33,9 @@ class Brain():
         """ Generate random inputs values for testing"""
         return np.random.randint(minval, maxval, [self.n_inputs, 1])
 
-    def compute(self, inputs):
+    def compute(self, inputs=None):
         """ Runs the input values through the network"""
+        if inputs is None: inputs = self.input_arr
         for layer in self.layers:
             inputs = layer.compute(inputs)
         return np.argmax(inputs)
