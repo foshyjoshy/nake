@@ -66,6 +66,7 @@ class Snake():
 
     def unableToMove(self):
         """ Returns if the snake is unable to move"""
+        return self.canMove() == False
 
     def updatePositionalView(self):
         """ Updates the positional arr view"""

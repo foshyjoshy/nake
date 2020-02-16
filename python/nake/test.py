@@ -7,8 +7,7 @@ import consts
 import time
 import numpy as np
 import matplotlib.pyplot as plt
-
-
+import os
 
 
 
@@ -16,7 +15,7 @@ import matplotlib.pyplot as plt
 def runSnake(snake, brain, food, board):
 
     while snake.length < board.size:
-
+        #print  ("Loop", snake)
         # Getting inputs
         snake.moves2BoardEdges(board, moves=brain.input_arr[:4, 0])
         if food.isAvailable:
@@ -34,12 +33,21 @@ def runSnake(snake, brain, food, board):
                 snake.feed()
                 food.findNext(snake)
 
-                if snake.length == 6:
-                    print ("Found second food position")
-                    # im = snake.generatePreviewImage(board)
-                    # im[food.pos[1], food.pos[0]] = 127
-                    # plt.imshow(im, vmin=0)
-                    # plt.show()
+                dirname = 'C:\\Users\\colyt\\OneDrive\\Documents\\snake'
+                path = os.path.join(dirname, 'snake.{:08d}.png'.format(loop))
+
+                if snake.length > 6:
+
+                    im = snake.generatePreviewImage(board)
+                    im[food.pos[1], food.pos[0]] = 62
+
+                    #fig = plt.Figure()
+                    plt.imshow(im, vmin=0)
+                    plt.title("{}".format(snake))
+                    plt.savefig(path)
+                    print (snake)
+
+
 
         if board.outside(snake.headPosition):
             break
@@ -66,10 +74,9 @@ if __name__ == "__main__":
         loop+=1
 
         brain = Brain()
-        snake = Snake.initializeAtPosition((5, 5), direction=consts.Moves.DOWN)
+        snake = Snake.initializeAtPosition((5, 5), direction=consts.Moves.DOWN, name=loop)
         food2 = food.getInitialStateCopy()
 
         runSnake(snake, brain, food2, food2.board)
-        if loop % 100 == 1:
-
+        if loop % 1000 == 1:
             print ("Loop", loop)

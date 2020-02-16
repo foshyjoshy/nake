@@ -102,7 +102,7 @@ class FoodGenerator():
         if available_indexes.size:
             # If we have enough space for next position
             ridx = self.randomState.randint(0, available_indexes.shape[0])
-            self._setpos(np.unravel_index(available_indexes[ridx], self.shape))
+            self._setpos(np.unravel_index(available_indexes[ridx], self.shape)[::-1])
         else:
             # We are unable to find any available space for food.
             self._setpos((-1, -1))
@@ -126,7 +126,7 @@ if __name__ == "__main__":
 
     for i in range(10000):
         food.findNext(snake)
-        im[food.pos[0], food.pos[1]]=66
+        im[food.pos[1], food.pos[0]]=66
 
     print (time.time()-a)
     plt.imshow(im, vmin=0)
