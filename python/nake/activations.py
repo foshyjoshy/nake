@@ -2,54 +2,11 @@ import numpy as np
 from abc import ABC, abstractmethod
 from logging import debug
 import consts
+from registry import Registry
 
 
-
-class Activations():
+class Activations(Registry):
     """ A class to store all activations """
-
-    registry = {}
-
-
-    def __new__(cls, **kwargs):
-        return cls.getInitialized(kwargs.pop(consts.NAME,None), **kwargs)
-
-    @classmethod
-    def isRegistered(cls, obj):
-        """ Checks if the obj is registered"""
-        return obj in cls.registry.items()
-
-    @classmethod
-    def isNameRegistered(cls, name):
-        """" Checks if a name is in the registry"""
-        return name in cls.registry
-
-    @classmethod
-    def register(cls, act):
-        """" Register an activation"""
-        if not issubclass(act, ActivationBase):
-            raise Exception("Unable to register {}. \
-                Not a subclass of {}".format(act, ActivationBase))
-        if cls.isNameRegistered(act.getName()):
-            raise Exception("Unable to register {}. \
-                {} is already registered".format(act, act.getName()))
-
-        debug("Registered class {} with name {}".format(act, act.getName()))
-        cls.registry[act.getName()] = act
-
-    @classmethod
-    def get(cls, name, value=None):
-        """ Returns registered activation with name"""
-        return cls.registry.get(name, value)
-
-    @classmethod
-    def getInitialized(cls, name, *args, **kwargs):
-        """ Returns registered initialized activation with name"""
-        if cls.isNameRegistered(name):
-            return cls.get(name)(*args, **kwargs)
-        else:
-            Exception("Nothing has been registered with name \"{}\"".format(name))
-
 
 
 
@@ -72,8 +29,6 @@ class ActivationBase(ABC):
     def getState(self):
         """ Returns the state of this object """
         return {consts.NAME : self.getName()}
-
-
 
 
 
