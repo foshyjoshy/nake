@@ -21,3 +21,6 @@ class Moves(bytes, Enum):
 
 
 
+NAME = "name"
+
+

@@ -1,6 +1,7 @@
 import numpy as np
 from abc import ABC, abstractmethod
 from logging import debug
+import consts
 
 
 
@@ -8,6 +9,10 @@ class Activations():
     """ A class to store all activations """
 
     registry = {}
+
+
+    def __new__(cls, **kwargs):
+        return cls.getInitialized(kwargs.pop(consts.NAME,None), **kwargs)
 
     @classmethod
     def isRegistered(cls, obj):
@@ -38,7 +43,7 @@ class Activations():
         return cls.registry.get(name, value)
 
     @classmethod
-    def initialize(cls, name, *args, **kwargs):
+    def getInitialized(cls, name, *args, **kwargs):
         """ Returns registered initialized activation with name"""
         if cls.isNameRegistered(name):
             return cls.get(name)(*args, **kwargs)
@@ -63,6 +68,11 @@ class ActivationBase(ABC):
     @abstractmethod
     def compute(self, value):
         pass
+
+    def getState(self):
+        """ Returns the state of this object """
+        return {consts.NAME : self.getName()}
+
 
 
 
@@ -89,21 +99,34 @@ class Relu(ActivationBase):
 if __name__ == "__main__":
 
 
-    class Test(ActivationBase):
+    class TestClass(ActivationBase):
         """ Test class """
 
         def __init__(self, a, b=None):
-            self.a = (a, b)
+            self.a = a
+            self.b = b
 
         def compute(self, x, out=None):
-            print("test", self.a)
+            return ("test", self.a, self.b)
 
+        def getState(self):
+            return {**super().getState(), "a" : self.a}
 
-    act = Activations.initialize("test", a=10, b=2)
+    import json
+
+    act = Activations.getInitialized("testclass", a=10, b=2)
     act.compute(act)
+    dump = json.dumps(act.getState())
+    #
+    # act = Activations.getInitialized("relu")
+    # print (act.compute(np.arange(-10, 10)))
+    # state =  act.getState()
 
-    act = Activations.initialize("relu")
-    print (act.compute(np.arange(-10, 10)))
+    act = Activations(**act.getState())
+    print (act.compute("s"))
+
+
+
 
 
 
