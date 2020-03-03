@@ -116,7 +116,7 @@ if __name__ == "__main__":
     from snake import Snake
     import consts
 
-    snake = Snake.initializeAtPosition((4,4), direction=consts.Moves.DOWN)
+    snake = Snake.initializeAtPosition((10,5), direction=consts.Moves.DOWN)
     board = Board.fromDims(12,6)
     food = FoodGenerator(board, (2,2))
 
@@ -125,6 +125,8 @@ if __name__ == "__main__":
     a = time.time()
 
     for i in range(10000):
+        if np.all(snake.headPosition == food.pos):
+            print ("error")
         food.findNext(snake)
         im[food.pos[1], food.pos[0]]=66
 

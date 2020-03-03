@@ -8,6 +8,7 @@ import time
 import numpy as np
 import matplotlib.pyplot as plt
 import os
+import multiprocessing
 
 
 
@@ -36,7 +37,7 @@ def runSnake(snake, brain, food, board):
                 dirname = 'C:\\Users\\colyt\\OneDrive\\Documents\\snake'
                 path = os.path.join(dirname, 'snake.{:08d}.png'.format(loop))
 
-                if snake.length > 6:
+                if snake.length > 5:
 
                     im = snake.generatePreviewImage(board)
                     im[food.pos[1], food.pos[0]] = 62
@@ -66,6 +67,11 @@ def runSnake(snake, brain, food, board):
 
 if __name__ == "__main__":
 
+
+    # print (multiprocessing.cpu_count())
+    # quit()
+
+
     board = Board.fromDims(10, 10)
     food = FoodGenerator(board, (1, 1))
 
@@ -78,5 +84,5 @@ if __name__ == "__main__":
         food2 = food.getInitialStateCopy()
 
         runSnake(snake, brain, food2, food2.board)
-        if loop % 1000 == 1:
+        if loop % 10000 == 1:
             print ("Loop", loop)

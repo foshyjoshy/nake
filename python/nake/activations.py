@@ -1,35 +1,20 @@
 import numpy as np
-from abc import ABC, abstractmethod
-from logging import debug
-import consts
-from registry import Registry
+from registry import Registry, RegistryItemBase
+from abc import abstractmethod
 
 
-class Activations(Registry):
+class Activation(Registry):
     """ A class to store all activations """
+    registry = {}
 
 
-
-class ActivationBase(ABC):
-    """" Abstract base class for activations """
-
-    def __init_subclass__(cls, **kwargs):
-        super().__init_subclass__(**kwargs)
-        Activations.register(cls)
-
-    @classmethod
-    def getName(cls):
-        """ Returns the name of the activation"""
-        return cls.__name__.lower()
+class ActivationBase(RegistryItemBase):
+    """ Base class for Activations """
+    REGISTRY = Activation
 
     @abstractmethod
-    def compute(self, value):
+    def compute(self, x, out=None):
         pass
-
-    def getState(self):
-        """ Returns the state of this object """
-        return {consts.NAME : self.getName()}
-
 
 
 class Tanh(ActivationBase):
@@ -47,12 +32,7 @@ class Relu(ActivationBase):
 
 
 
-
-
-
-
 if __name__ == "__main__":
-
 
     class TestClass(ActivationBase):
         """ Test class """
@@ -65,20 +45,21 @@ if __name__ == "__main__":
             return ("test", self.a, self.b)
 
         def getState(self):
-            return {**super().getState(), "a" : self.a}
+            return {**super().getState(), "a": self.a}
 
-    import json
 
-    act = Activations.getInitialized("testclass", a=10, b=2)
+    print ("Available activations {}".format(Activation.registeredNames()))
+    act = Activation.getInitialized("tanh")
+    print ("Tanh of 1", act.compute(1))
+    act = Activation.getInitialized("testclass", a="test")
     act.compute(act)
-    dump = json.dumps(act.getState())
-    #
-    # act = Activations.getInitialized("relu")
-    # print (act.compute(np.arange(-10, 10)))
-    # state =  act.getState()
+    print (act.getState())
+    act = Activation(**act.getState())
+    act.compute("s")
 
-    act = Activations(**act.getState())
-    print (act.compute("s"))
+
+
+
 
 
 

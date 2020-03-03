@@ -1,20 +1,22 @@
 import logging
 import numpy as np
-from neuralNet import Layer
+from layers import Dense
 import time
 
 
 class Brain():
     """ Basic snake brain"""
 
+
+
     def __init__(self, n_inputs=14, n_hidden_inputs=16, n_outputs=4):
         super().__init__()
 
         self.layers = [
-                Layer("input_layer", n_inputs, n_hidden_inputs),
-                Layer("hidden_00", n_hidden_inputs, n_hidden_inputs),
-                Layer("hidden_01", n_hidden_inputs, n_hidden_inputs),
-                Layer("output_layer", n_hidden_inputs, n_outputs),
+                Dense("input_layer", n_inputs, n_hidden_inputs),
+                Dense("hidden_00", n_hidden_inputs, n_hidden_inputs),
+                Dense("hidden_01", n_hidden_inputs, n_hidden_inputs),
+                Dense("output_layer", n_hidden_inputs, n_outputs),
                      ]
 
         self.input_arr = self.generateRandomInputs()
@@ -49,9 +51,17 @@ class Brain():
         pass
 
 
+class Brain2(Brain):
+    pass
+
+
 
 
 if __name__ == "__main__":
+
+    a = Brain()
+    quit()
+
 
     brain = Brain()
 

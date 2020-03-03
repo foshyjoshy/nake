@@ -22,5 +22,6 @@ class Moves(bytes, Enum):
 
 
 NAME = "name"
-
+CNAME = "class_name"
+ARGS = "arguments"
 
