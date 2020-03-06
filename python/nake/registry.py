@@ -16,14 +16,22 @@ class Registry():
         return
 
     @classmethod
-    def isRegistered(cls, obj):
-        """ Checks if the obj is registered"""
-        return obj in cls.registry.items()
+    def isClassRegistered(cls, cls_):
+        """ Checks if the cls_ is registered"""
+        return cls_ in list(cls.registry.values())
 
     @classmethod
     def isNameRegistered(cls, name):
         """" Checks if a name is in the registry"""
         return name in cls.registry
+
+    @classmethod
+    def isObjectRegistered(cls, obj):
+        """ Checks if this objects class has been registered"""
+        for i in list(cls.registry.values()):
+            if isinstance(obj, i):
+                return True
+        else: return False
 
     @classmethod
     def register(cls, act):
@@ -58,7 +66,10 @@ class Registry():
         """ Returns the registry keys"""
         return list(self.registry.keys())
 
-
+    @classmethod
+    def registeredClasses(self):
+        """ Returns the registry classes"""
+        return list(self.registry.values())
 
 
 class RegistryItemBase(ABC):
@@ -82,6 +93,6 @@ class RegistryItemBase(ABC):
         """ Returns the name of the item"""
         return cls.__name__.lower()
 
-    def getState(self):
+    def __getstate__(self):
         """ Returns the state of this object """
         return {consts.NAME : self.getItemName()}

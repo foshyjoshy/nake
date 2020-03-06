@@ -44,8 +44,8 @@ if __name__ == "__main__":
         def compute(self, x, out=None):
             return ("test", self.a, self.b)
 
-        def getState(self):
-            return {**super().getState(), "a": self.a}
+        def __getstate__(self):
+            return {**super().__getstate__(), "a": self.a}
 
 
     print ("Available activations {}".format(Activation.registeredNames()))
@@ -53,8 +53,8 @@ if __name__ == "__main__":
     print ("Tanh of 1", act.compute(1))
     act = Activation.getInitialized("testclass", a="test")
     act.compute(act)
-    print (act.getState())
-    act = Activation(**act.getState())
+    print (act.__getstate__())
+    act = Activation(**act.__getstate__())
     act.compute("s")
 
 
