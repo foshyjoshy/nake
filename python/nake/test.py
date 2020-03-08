@@ -1,4 +1,4 @@
-from brain import Brain
+from brain import BasicBrain
 from snake import Snake
 from board import Board
 from food2 import FoodGenerator
@@ -16,17 +16,9 @@ import multiprocessing
 def runSnake(snake, brain, food, board):
 
     while snake.length < board.size:
-        #print  ("Loop", snake)
-        # Getting inputs
-        snake.moves2BoardEdges(board, moves=brain.input_arr[:4, 0])
-        if food.isAvailable:
-            brain.input_arr[4:6, 0] = food.pos - snake.headPosition
-        else:
-            brain.input_arr[4:6, 0] = 0
-        snake.moves2Self(moves=brain.input_arr[6:14, 0])
 
-        # Running brain
-        moveIdx = brain.compute()
+        #Running brain
+        moveIdx = brain.computeMove(snake, board, food)
         snake.move(consts.Moves(moveIdx))
 
         if food.isAvailable():
@@ -37,7 +29,7 @@ def runSnake(snake, brain, food, board):
                 dirname = 'C:\\Users\\colyt\\OneDrive\\Documents\\snake'
                 path = os.path.join(dirname, 'snake.{:08d}.png'.format(loop))
 
-                if snake.length > 5:
+                if snake.length > 4:
 
                     im = snake.generatePreviewImage(board)
                     im[food.pos[1], food.pos[0]] = 62
@@ -45,7 +37,8 @@ def runSnake(snake, brain, food, board):
                     #fig = plt.Figure()
                     plt.imshow(im, vmin=0)
                     plt.title("{}".format(snake))
-                    plt.savefig(path)
+                    plt.show()
+                    #plt.savefig(path)
                     print (snake)
 
 
@@ -79,7 +72,7 @@ if __name__ == "__main__":
     while True:
         loop+=1
 
-        brain = Brain()
+        brain = BasicBrain.create()
         snake = Snake.initializeAtPosition((5, 5), direction=consts.Moves.DOWN, name=loop)
         food2 = food.getInitialStateCopy()
 

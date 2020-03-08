@@ -2,6 +2,75 @@ import numpy as np
 from registry import Registry, RegistryItemBase
 from activations import Activation, Tanh
 
+
+
+class SequentialModel():
+    """ A list of layers that is computed sequential """
+
+    def __init__(self, layers):
+        for idx, layer in enumerate(layers):
+            # Converting layer dict (getstate) to Layer objects
+            if isinstance(layer, dict):
+                layers[idx] = Layer(**layer)
+
+        self.layers = layers
+        self.input_arr = self.generateRandomInputs()
+
+    def __iter__(self):
+        for elem in self.layers:
+            yield elem
+
+    def layerByName(self, name):
+        """ returns the layer for the given name"""
+        for layer in self:
+            if name == layer.layer_name:
+                return layer
+
+    @property
+    def n_inputs(self):
+        """ Returns """
+        return self.layers[0].n_inputs
+
+    @property
+    def n_outputs(self):
+        """ Returns """
+        return self.layers[-1].n_outputs
+
+    def generateRandomInputs(self, minval=0, maxval=20):
+        """ Generate random inputs values for testing"""
+        return np.random.randint(minval, maxval, [self.n_inputs, 1])
+
+    def compute(self, inputs=None):
+        """ Runs the input values through the network"""
+        if inputs is None: inputs = self.input_arr
+        for layer in self.layers:
+            inputs = layer.compute(inputs)
+        return np.argmax(inputs)
+
+    def getStateList(self):
+        """ Return a list of layer get state"""
+        return [layer.__getstate__() for layer in self]
+
+    def getWeights(self):
+        """ Returns the array state of all layers"""
+        arrWeights= {}
+        for layer in self:
+            for key, value in layer.getWeights().items():
+                arrWeights["{}_{}".format(layer.layer_name, key)] = value
+        return arrWeights
+
+    def setWeights(self, arrDict):
+        """ Sets arrays on layers """
+        for name, arr in arrDict.items():
+            name, arr_name = name.rsplit("_", 1)
+            self.layerByName(name).setArr(arr_name, arr)
+
+
+
+
+
+
+
 class Layer(Registry):
     """ A class to store all layers"""
     registry = {}
@@ -17,11 +86,14 @@ class LayerBase(RegistryItemBase):
     ACTIVATION = "activation"
     USE_BIAS = "use_bias"
 
+    BIASES = "biases"
+    WEIGHTS = "weights"
+
+
 
 
 class Dense(LayerBase):
-    """ Dsense layer """
-
+    """ Dense layer """
 
     def __init__(self, layer_name, n_inputs, n_outputs, activation=None, use_bias=True):
         self.layer_name = layer_name
@@ -33,8 +105,11 @@ class Dense(LayerBase):
             activation = Activation.getInitialized("tanh")
         else:
             if not Activation.isObjectRegistered(activation):
-                raise Exception("{} is not a "\
-                "registered activation. Use {}".format(activation, Activation.registeredClasses()))
+                if not isinstance(activation, dict):
+                    raise Exception("{} is not a "\
+                    "registered activation. Use {}".format(activation, Activation.registeredClasses()))
+                else:
+                    activation = Activation(**activation)
 
         self.activation = activation
 
@@ -74,15 +149,42 @@ class Dense(LayerBase):
          }
         return {**super().__getstate__(), **state}
 
+    def getWeights(self):
+        """ Returns the array state of the layer"""
+        return {
+            self.WEIGHTS : self.weights,
+            self.BIASES : self.biases,
+        }
+
+    def setArr(self, name, arr):
+        """ Sets an arr"""
+        if name == self.BIASES:
+            self.setBiases(arr)
+        elif name == self.WEIGHTS:
+            self.setWeights(arr)
+        else:
+            raise Exception("{} is not a valid array name".format(name))
+
+
 
 
 
 if __name__ == "__main__":
 
-    import pprint
 
-    act = Activation.getInitialized("relu")
+    layer = Layer("dense", "input_layer", 10, 20)
+    layer2 = Layer("dense", "output_layer", 20, 4)
 
-    layer = Layer("dense", "input_layer", 10, 20, activation=act)
-    state = layer.__getstate__()
-    pprint.pprint(state)
+    # Creating two layer model
+    model = SequentialModel([layer, layer2])
+
+    # Duplicating model
+    model2 = SequentialModel(model.getStateList())
+    # Setting model ones weights
+    model2.setWeights(model.getWeights())
+
+    # Checking if both outs generate the same value
+    print (model2.compute(model.input_arr))
+    print (model.compute())
+
+

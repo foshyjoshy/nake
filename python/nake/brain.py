@@ -1,46 +1,56 @@
-import logging
-import numpy as np
-from layers import Dense
-import time
-
-
-class Brain():
-    """ Basic snake brain"""
+from registry import Registry, RegistryItemBase
+from abc import abstractmethod
+from layers import SequentialModel, Dense
+import consts
 
 
 
-    def __init__(self, n_inputs=14, n_hidden_inputs=16, n_outputs=4):
-        super().__init__()
+class Brains(Registry):
+    """ A class to store all brains"""
+    registry = {}
 
-        self.layers = [
-                Dense("input_layer", n_inputs, n_hidden_inputs),
-                Dense("hidden_00", n_hidden_inputs, n_hidden_inputs),
-                Dense("hidden_01", n_hidden_inputs, n_hidden_inputs),
-                Dense("output_layer", n_hidden_inputs, n_outputs),
-                     ]
 
-        self.input_arr = self.generateRandomInputs()
+class BrainBase(RegistryItemBase):
+    """ Base class for Brains """
+    REGISTRY = Brains
 
-    @property
-    def n_inputs(self):
-        """ Returns """
-        return self.layers[0].n_inputs
+    @abstractmethod
+    def crossover(self, brain2):
+        """ Mixes two brains together"""
+        pass
 
-    @property
-    def n_outputs(self):
-        """ Returns """
-        return self.layers[-1].n_outputs
+    @abstractmethod
+    def mutate(self, percent=5):
+        """ Mutates a percentage of the non-locked networks weights """
+        pass
 
-    def generateRandomInputs(self, minval=0, maxval=20):
-        """ Generate random inputs values for testing"""
-        return np.random.randint(minval, maxval, [self.n_inputs, 1])
+    @abstractmethod
+    def computeMove(self, snake, board, food):
+        """ Computes snakes move"""
 
-    def compute(self, inputs=None):
-        """ Runs the input values through the network"""
-        if inputs is None: inputs = self.input_arr
-        for layer in self.layers:
-            inputs = layer.compute(inputs)
-        return np.argmax(inputs)
+
+
+class BasicBrain(BrainBase):
+    """ Basic brain """
+
+    SEQUENTIALMODEL = "sequentialModel"
+
+    def __init__(self, sequentialModel):
+        if isinstance(sequentialModel, list):
+            sequentialModel = SequentialModel(sequentialModel)
+        assert isinstance(sequentialModel, SequentialModel)
+        self.sequentialModel = sequentialModel
+
+    @classmethod
+    def create(cls, n_inputs=14, n_hidden_inputs=16, n_outputs=4):
+        """ Sets up a basic brain class"""
+        model = SequentialModel([
+                    Dense("input_layer", n_inputs, n_hidden_inputs),
+                    Dense("hidden_00", n_hidden_inputs, n_hidden_inputs),
+                    Dense("hidden_01", n_hidden_inputs, n_hidden_inputs),
+                    Dense("output_layer", n_hidden_inputs, n_outputs),
+                         ])
+        return cls(model)
 
     def crossover(self, brain2):
         """ Mixes two brains together"""
@@ -50,26 +60,34 @@ class Brain():
         """ Mutates a percentage of the non-locked networks weights """
         pass
 
+    def __getstate__(self):
+        """ Returns the state of the layer"""
+        return {**super().__getstate__(), self.SEQUENTIALMODEL: self.sequentialModel.getStateList()}
 
-class Brain2(Brain):
-    pass
+
+    def computeMove(self, snake, board, food):
+        """ Computes snakes move"""
+        snake.moves2BoardEdges(board, moves=self.sequentialModel.input_arr[:4, 0])
+        if food.isAvailable:
+            self.sequentialModel.input_arr[4:6, 0] = food.pos - snake.headPosition
+        else:
+            self.sequentialModel.input_arr[4:6, 0] = 0
+        snake.moves2Self(moves=self.sequentialModel.input_arr[6:14, 0])
+
+        return self.sequentialModel.compute()
+
 
 
 
 
 if __name__ == "__main__":
 
-    a = Brain()
-    quit()
+    brain = BasicBrain.create()
+    brain2 = Brains(**brain.__getstate__())
+    brain2.sequentialModel.compute()
 
 
-    brain = Brain()
 
-    input = brain.generateRandomInputs()
 
-    a = time.time()
-    for i in range(10000):
-        c = brain.compute(input)
-    print (time.time()-a)
-    print (c)
+
 
