@@ -61,10 +61,6 @@ def runSnake(snake, brain, food, board):
 if __name__ == "__main__":
 
 
-    # print (multiprocessing.cpu_count())
-    # quit()
-
-
     board = Board.fromDims(10, 10)
     food = FoodGenerator(board, (1, 1))
 
@@ -72,7 +68,7 @@ if __name__ == "__main__":
     while True:
         loop+=1
 
-        brain = BasicBrain.create()
+        brain = BasicBrain.create(name="")
         snake = Snake.initializeAtPosition((5, 5), direction=consts.Moves.DOWN, name=loop)
         food2 = food.getInitialStateCopy()
 

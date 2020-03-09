@@ -20,7 +20,3 @@ class Moves(bytes, Enum):
     RIGHT = np.array([ 1, 0], dtype=DTYPE_SNAKE)
 
 
-
-NAME = "name"
-CNAME = "class_name"
-ARGS = "arguments"

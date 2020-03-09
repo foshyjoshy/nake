@@ -8,8 +8,8 @@ class Registry():
 
     registry = {}
 
-    def __new__(cls, name, *args, **kwargs):
-        return cls.getInitialized(name, *args, **kwargs)
+    def __new__(cls, class_name, *args, **kwargs):
+        return cls.getInitialized(class_name, *args, **kwargs)
 
     @classmethod
     def registrySubclass(cls):
@@ -77,6 +77,8 @@ class RegistryItemBase(ABC):
 
     REGISTRY, _REGISTRY = None, None
 
+    CLASS_NAME = "class_name"
+
     def __init_subclass__(cls, **kwargs):
         if cls._REGISTRY is None:
             if cls.REGISTRY is None:
@@ -95,4 +97,4 @@ class RegistryItemBase(ABC):
 
     def __getstate__(self):
         """ Returns the state of this object """
-        return {consts.NAME : self.getItemName()}
+        return {self.CLASS_NAME : self.getItemName()}

@@ -13,6 +13,8 @@ class SequentialModel():
             if isinstance(layer, dict):
                 layers[idx] = Layer(**layer)
 
+        #TODO check if layers work!!!
+
         self.layers = layers
         self.input_arr = self.generateRandomInputs()
 
