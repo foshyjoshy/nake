@@ -7,6 +7,19 @@ import copy
 import random
 
 
+def randomState2Json(rnd0,rnd1,rnd2,rnd3,rnd4):
+    """ Convert random state to json list"""
+    rnd1 = [int(number) for number in rnd1]
+    return (rnd0,list(map(int, rnd1)),rnd2,rnd3,rnd4)
+
+def list2RandomState( rnd0,rnd1,rnd2,rnd3,rnd4 ):
+    """ Converts a random state list to a random state"""
+    rnd1 = [np.uint32(number) for number in rnd1]
+    return  (rnd0,rnd1,rnd2,rnd3,rnd4)
+
+
+
+
 
 class FoodGenerator():
     """ Handles the snakes food random state"""
@@ -121,13 +134,42 @@ if __name__ == "__main__":
     import consts
 
 
-    r = np.random.RandomState(seed=31231231)
-    print (r.randint(0,10))
-    print(r.randint(0, 10))
 
-    r = np.random.RandomState(seed=31231231)
-    print (r.randint(0,10))
-    print(r.randint(0, 10))
+    board = Board.fromDims(12, 6)
+    food = FoodGenerator(board, (2,2))
+    snake = Snake.initializeAtPosition((10, 5), direction=consts.Moves.DOWN)
+
+    food.findNext(snake)
+    print (food.pos)
+
+
+    liststate = randomState2Json(*food._initialState)
+    state = list2RandomState(*liststate)
+
+    food = FoodGenerator(board, (2, 2))
+    food.randomState.set_state(state)
+    food.findNext(snake)
+    print (food.pos)
+
+
+
+
+
+    #
+    #
+    #
+    #
+    #
+    #
+    #
+    #
+    #
+    # r = np.random.RandomState(seed=31231231)
+    # print(r.randint(0, 10, 20))
+    #
+    # r = np.random.RandomState(seed=31231231)
+    # print (r.randint(0,10))
+    # print(r.randint(0, 10, 19))
 
 
     quit()
