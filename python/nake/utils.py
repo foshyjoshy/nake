@@ -39,3 +39,15 @@ def moves2RectangleEdge(point, leftTop, rightBottom, moves=None):
     moves[3] = point[0] - leftTop[0]
 
     return moves
+
+
+
+def checkRequiredKeys(data_dict, required_keys):
+    """ Checks that all the required keys are in dict"""
+    assert (isinstance(data_dict, dict))
+    for rkey in required_keys:
+        if not rkey in data_dict:
+            raise KeyError("Required key \"{}\" is missing from input dict".format(rkey))
+
+
+

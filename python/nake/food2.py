@@ -11,6 +11,10 @@ import random
 class FoodGenerator():
     """ Handles the snakes food random state"""
 
+
+
+
+
     def __init__(self, board, pos, state=None, seed=None):
         self.randomState = np.random.RandomState(seed=seed)
         if state is not None:
@@ -116,22 +120,42 @@ if __name__ == "__main__":
     from snake import Snake
     import consts
 
-    snake = Snake.initializeAtPosition((10,5), direction=consts.Moves.DOWN)
-    board = Board.fromDims(12,6)
+
+    r = np.random.RandomState(seed=31231231)
+    print (r.randint(0,10))
+    print(r.randint(0, 10))
+
+    r = np.random.RandomState(seed=31231231)
+    print (r.randint(0,10))
+    print(r.randint(0, 10))
+
+
+    quit()
+
+
+    board = Board.fromDims(12, 6)
     food = FoodGenerator(board, (2,2))
 
-    im = snake.generatePreviewImage(board)
+    print (food._initialState)
 
-    a = time.time()
 
-    for i in range(10000):
-        if np.all(snake.headPosition == food.pos):
-            print ("error")
-        food.findNext(snake)
-        im[food.pos[1], food.pos[0]]=66
+    #snake = Snake.initializeAtPosition((10,5), direction=consts.Moves.DOWN)
+    #board = Board.fromDims(12,6)
 
-    print (time.time()-a)
-    plt.imshow(im, vmin=0)
-    plt.colorbar()
-    plt.show()
+    # food = FoodGenerator(board, (2,2))
+    #
+    # im = snake.generatePreviewImage(board)
+    #
+    # a = time.time()
+    #
+    # for i in range(10000):
+    #     if np.all(snake.headPosition == food.pos):
+    #         print ("error")
+    #     food.findNext(snake)
+    #     im[food.pos[1], food.pos[0]]=66
+    #
+    # print (time.time()-a)
+    # plt.imshow(im, vmin=0)
+    # plt.colorbar()
+    # plt.show()
 

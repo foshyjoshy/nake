@@ -4,12 +4,19 @@ import numpy as np
 
 class Board():
 
-    def __init__(self, leftTop, rightBottom):
-        if not len(leftTop)==2 or not len(rightBottom)==2:
-            raise Exception("Incorrect input shapes")
+    LEFT_TOP = "left_top"
+    RIGHT_BOTTOM = "right_bottom"
 
-        self.leftTop = leftTop
-        self.rightBottom = rightBottom
+    DEFAULT_LEFT_TOP = (0,0)
+
+    def __init__(self, leftTop, rightBottom):
+
+        self.leftTop = np.array(leftTop, dtype=int)
+        self.rightBottom = np.array(rightBottom, dtype=int)
+        if not self.leftTop.shape == (2,) or not self.rightBottom.shape == (2,):
+           raise Exception("Incorrect input shapes. Shape of (2,) required")
+
+
         self.width = self.rightBottom[0]-self.leftTop[0]
         self.height = self.rightBottom[1]-self.leftTop[1]
         self.size = self.width*self.height
@@ -19,6 +26,22 @@ class Board():
     def fromDims(cls, width, height, *args, **kwargs):
         """ Initialize class from width and height"""
         return cls((0,0), (width, height), *args, **kwargs)
+
+    @classmethod
+    def fromState(cls, stateDict):
+        """ Initialize from state"""
+        utils.checkRequiredKeys(stateDict, [cls.RIGHT_BOTTOM])
+        return cls(
+            stateDict.get(cls.LEFT_TOP, cls.DEFAULT_LEFT_TOP),
+            stateDict.get(cls.RIGHT_BOTTOM),
+        )
+
+    def __getstate__(self):
+        """ Returns the state of the board"""
+        return {
+            self.LEFT_TOP : self.leftTop.tolist(),
+            self.RIGHT_BOTTOM : self.rightBottom.tolist(),
+        }
 
     def __str__(self):
         return "Lefttop {} rightBottom {}".format(self.leftTop, self.rightBottom)
@@ -63,13 +86,6 @@ class Board():
 if __name__ == "__main__":
 
     board = Board.fromDims(5, 5)
-    print (board.width, board.height)
-    print (board.movesToBoardEdges((3,3)))
+    print (board.__getstate__())
 
-    r = np.random.RandomState(1234)
-    #ps = r.randint(199, size=1)
-
-    r2 = np.random.RandomState()
-    r2.set_state(r.get_state())
-    ps = r2.randint(199, size=1)
-    print (ps)
+    board2 = Board.fromState(board.__getstate__())
