@@ -117,10 +117,7 @@ class Snake():
         self.updatePositionalView()
         # Update our remaining moves
         self.movesRemaining-=1
-
         return True
-
-
 
     def moveUp(self, **kwargs):
         """ Moves the snake up"""
@@ -147,12 +144,18 @@ class Snake():
         return utils.moves2Body(
             self.headPosition, self.bodyPositions, consts.ANGLES_45, moves=moves)
 
-    def generatePreviewImage(self, board):
+    def generatePreviewImage(self, board, color_head=255, color_body=127, color_board=0, dtype=np.uint8):
         """ Simple view of the snake"""
-        im = np.zeros([board.height, board.width], dtype=np.uint8)
-        im[:,:] = 0
-        im[self.bodyPositions[:,1]+board.y, self.bodyPositions[:,0]+board.x] = 127
-        im[self.headPosition[1]+board.y, self.headPosition[0]+board.x] = 255
+        min_value = np.iinfo(dtype).min
+        max_value = np.iinfo(dtype).max
+        assert (color_head >= min_value and color_head <= max_value)
+        assert (color_body >= min_value and color_body <= max_value)
+        assert (color_board >= min_value and color_board <= max_value)
+
+        im = np.zeros([board.height, board.width], dtype=dtype)
+        im[:,:] = color_board
+        im[self.bodyPositions[:,1]+board.y, self.bodyPositions[:,0]+board.x] = color_body
+        im[self.headPosition[1]+board.y, self.headPosition[0]+board.x] = color_head
         return im
 
 

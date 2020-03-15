@@ -49,5 +49,9 @@ def checkRequiredKeys(data_dict, required_keys):
         if not rkey in data_dict:
             raise KeyError("Required key \"{}\" is missing from input dict".format(rkey))
 
+def arrShapeMatch(arr, shape):
+    """ Checks the the arr.shape matches shape"""
+    if not arr.shape == shape:
+        raise Exception("Arr shape miss match. Expected {}. Received {}".fomrat(shape, arr.shape))
 
 

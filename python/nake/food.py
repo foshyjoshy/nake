@@ -1,116 +1,201 @@
 import numpy as np
+import matplotlib.pyplot as plt
+from snake import Snake
+from utils import checkRequiredKeys, arrShapeMatch
+from board import Board
+
+import time
+import copy
+
+
+class RandomIndexGenerator():
+    """ A simple wrapper around np.random.RandomState """
+
+    SEED = "seed"
+    COUNT = "count"
+
+    def __init__(self, seed=None, count=0):
+        if seed is None:
+            seed = self.generateRandomSeed()
+        self._set(seed, count)
+
+    def _set(self, seed, count=0):
+        """ Sets the seed and advances to count position"""
+        self._seed = seed
+        self._randomState = np.random.RandomState(seed=seed)
+        if count > 0:
+            # Skipping x number of random samples so its set to the correct state
+            self._randomState.random_sample(count)
+        self._count = count
+
+    def __call__(self, *args):
+        return self.get(*args)
+
+    @staticmethod
+    def generateRandomSeed():
+        """ Generates random seed between 0-(2**32-1) """
+        return np.random.randint(0, 2 ** 32 - 1, dtype=np.uint32)
+
+    def duplicate(self, initialState=False):
+        """ Duplicate class at current state if not initialState """
+        count = [self._count, 0][initialState]
+        return self.__class__(self._seed, count=count)
+
+    def _get(self, size=1):
+        """ returns a value or values between 0-1 """
+        val = self._randomState.random_sample(int(size))
+        self._count += 1
+        return val
+
+    def get(self, max_index):
+        """ returns random index between 0 amd max_index"""
+        return int(self._get() * (max_index / 1.))
+
+    def __getstate__(self):
+        """  """
+        return {
+            self.SEED: self._seed,
+            self.COUNT: self._count,
+        }
+
+    def __setstate__(self, state):
+        """ """
+        checkRequiredKeys(state, [self.SEED, self.COUNT])
+        self._set(state[self.SEED], state[self.COUNT])
 
 
 
 class FoodGenerator():
     """ Handles the snakes food random state"""
 
-    DEFAULT_NRPOSITIONS = 999
+    def __init__(self, board, pos, indexGenerator=None):
+        if indexGenerator is None:
+            indexGenerator = RandomIndexGenerator()
 
-    def __init__(self, board, pos=None, stateX=None, stateY=None, seedX=None, seedY=None, nr=None):
-        self.randomStateX = np.random.RandomState(seed=seedX)
-        self.randomStateY = np.random.RandomState(seed=seedY)
-        if stateX is not None:
-            self.randomStateX.set_state(stateX)
-        if stateY is not None:
-            self.randomStateY.set_state(stateY)
+        assert isinstance(board, Board)
+        assert isinstance(indexGenerator, RandomIndexGenerator)
+        self._indexGenerator = indexGenerator
 
-        self.stateX = self.randomStateX.get_state()
-        self.stateY = self.randomStateY.get_state()
+        self._initialPos = np.array(pos)
+        self._initialPos.flags.writeable = False
+
         self.board = board
-        self.nr = nr or self.DEFAULT_NRPOSITIONS
+        self._arr = np.zeros([self.size], dtype=np.bool)
+        self._status = True
+        self._count = 0
 
-        # Generating positions
-        self._generateNewPositions()
-        if pos is not None:
-            self.prependPosition(pos)
+        # Checking if our point is inside the board.
+        if not self.board.inside(pos):
+            raise Exception("Starting food position is outside board")
+
+        self._pos = np.array(pos, dtype=int)
+        self._pos.flags.writeable = False
 
     def __str__(self):
-        return "Food {} {} index {}".format(self.x, self.y, self.currentIndex)
+        return "FG {} count {} status {}".format(self.pos, self.count, self.status)
 
-    def __repr__(self):
-        return "Food({},{})".format(self.x, self.y)
+    def __array__(self):
+        return self.pos
+
+    @property
+    def pos(self):
+        """ Returns the pos"""
+        return self._pos
+
+    def copy(self, keepBoard=True):
+        """ Returns a copy of this class """
+        cls = copy.deepcopy(self)
+        if keepBoard:
+            cls.board = self.board
+        return cls
+
+    def duplicate(self, keepBoard=True, initialState=False):
+        """ Returns a copy of this class """
+        if keepBoard:
+            board = self.board
+        else:
+            board = copy.deepcopy(self.board)
+        return self.__class__(
+            board,
+            copy.deepcopy(self._initialPos),
+            indexGenerator=self._indexGenerator.duplicate(initialState=initialState)
+        )
 
     @property
     def shape(self):
         return self.board.shape
 
     @property
-    def currentIndex(self):
-        return self._currentIndex
+    def size(self):
+        return self.board.size
 
-    @currentIndex.setter
-    def currentIndex(self, index):
-        if index >= self._positions.shape[0]:
-            self._generateNewPositions()
+    def isAvailable(self):
+        """ """
+        return self._status
+
+    def notAvailable(self):
+        """ """
+        return self._status == False
+
+    def _setpos(self, pos):
+        """ Sets the new position of the food """
+        self._pos.flags.writeable = True
+        self._pos[:] = pos
+        self._pos.flags.writeable = False
+        self._count += 1
+
+    def findNext(self, positions):
+        """ Finds the next available position """
+        if isinstance(positions, Snake):
+            positions = positions.positions
+
+        indexes = np.ravel_multi_index(positions.T[::-1], self.shape)
+
+        self._arr[:] = True
+        self._arr[indexes] = False
+
+        #plt.imshow(self._arr.reshape(self.shape))
+        #plt.show()
+
+        available_indexes = np.nonzero(self._arr)[0]
+        if available_indexes.size:
+            # If we have enough space for next position
+            ridx = self._indexGenerator(available_indexes.shape[0])
+            self._setpos(np.unravel_index(available_indexes[ridx], self.shape)[::-1])
         else:
-            self.setCurrentIndex(index)
-        # Updating views for faster reading
-        self.x = self._positions[self.currentIndex, 0]
-        self.y = self._positions[self.currentIndex, 1]
-        self.pos = self._positions[self.currentIndex]
-        self.positions = self._positions[self.currentIndex:]
+            # We are unable to find any available space for food.
+            self._setpos((-1, -1))
+            self._status = False
 
-
-    def setCurrentIndex(self, idx=0):
-        """ Sets the current index"""
-        self._currentIndex = idx
-
-    def prependPosition(self, pos):
-        """ Prepends a positions to the start of the position arr"""
-        self._positions = np.vstack([np.array(pos).reshape([-1, 2]), self._positions])
-        if self.currentIndex > 0:
-            self.currentIndex+=1
-
-    def _generateNewPositions(self, resetindex=True):
-        """ Generates new selfs.positions"""
-        self._positions = np.vstack([
-            self.randomStateX.randint(self.board.x, self.board.x2, size=self.nr),
-            self.randomStateY.randint(self.board.y, self.board.y2, size=self.nr)
-                ]).T
-        if resetindex:
-            self.currentIndex = 0
-
-    def __eq__(self, other):
-        return self.pos.__eq__(other)
-
-    def __next__(self):
-        self.next()
         return self.pos
-
-    def next(self):
-        """ Moves to next food position"""
-        self.currentIndex+=1
-
-    def findNext(self, positions, maxloop=-1):
-        """ Makes sure the next position is not within the positions arr"""
-        loopcount = 0
-        while loopcount != maxloop:
-            if not np.any(np.all(foodGen1.pos == positions, axis=1)):
-                return True
-            self.next()
-            loopcount+=1
-        return False
-
-
-
 
 
 if __name__ == "__main__":
 
-    from board import Board
-    import time
+    import consts
 
-    foodGen1 = FoodGenerator(Board.fromDims(128, 128), nr=100)
+    board = Board.fromDims(12, 6)
+    food = FoodGenerator(board, (2, 2))
+    snake = Snake.initializeAtPosition((10, 5), direction=consts.Moves.DOWN)
 
-    positions = np.mgrid[0:128,0:128].T.reshape([-1, 2])
-    np.random.shuffle(positions)
-    positions = positions[:128*128-1]
-
-    print (positions.shape)
-    print (np.multiply(*foodGen1.shape))
+    im = snake.generatePreviewImage(board, color_body=10, color_head=26)
 
     a = time.time()
-    status = foodGen1.findNext(positions, maxloop=-1)
-    print (status)
-    print (time.time()-a)
+
+    for i in range(10000):
+        if np.all(snake.headPosition == food.pos):
+            print("error")
+        food.findNext(snake)
+        im[food.pos[1], food.pos[0]] += 1
+        # plt.show()
+
+    food2 = food.duplicate()
+    print(food2.findNext(snake))
+    print(food.findNext(snake))
+    print(food._count)
+    quit()
+
+    print(time.time() - a)
+    plt.imshow(im, vmin=0)
+    plt.colorbar()
+    plt.show()

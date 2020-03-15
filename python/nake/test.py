@@ -1,7 +1,7 @@
 from brain import BasicBrain
 from snake import Snake
 from board import Board
-from food2 import FoodGenerator
+from food import FoodGenerator
 
 import consts
 import time
@@ -39,7 +39,7 @@ def runSnake(snake, brain, food, board):
                     plt.title("{}".format(snake))
                     plt.show()
                     #plt.savefig(path)
-                    print (snake)
+                    print (snake, food._indexGenerator._count)
 
 
 
@@ -70,7 +70,9 @@ if __name__ == "__main__":
 
         brain = BasicBrain.create(name="")
         snake = Snake.initializeAtPosition((5, 5), direction=consts.Moves.DOWN, name=loop)
-        food2 = food.getInitialStateCopy()
+        food2 = food.duplicate()
+
+        #print (food2.findNext(snake))
 
         runSnake(snake, brain, food2, food2.board)
         if loop % 10000 == 1:
