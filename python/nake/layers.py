@@ -1,6 +1,7 @@
 import numpy as np
 from registry import Registry, RegistryItemBase
 from activations import Activation, Tanh
+from logging import debug
 
 
 
@@ -64,6 +65,7 @@ class SequentialModel():
     def setWeights(self, arrDict):
         """ Sets arrays on layers """
         for name, arr in arrDict.items():
+            debug("Setting arr {} with shape {}".format(name , arr.shape))
             name, arr_name = name.rsplit("_", 1)
             self.layerByName(name).setArr(arr_name, arr)
 

@@ -64,15 +64,21 @@ if __name__ == "__main__":
     board = Board.fromDims(10, 10)
     food = FoodGenerator(board, (1, 1))
 
+    brain2 = BasicBrain.create(name="snake01")
+
+
     loop=0
     while True:
         loop+=1
 
-        brain = BasicBrain.create(name="")
+        brain = BasicBrain.create(name="snake01")
         snake = Snake.initializeAtPosition((5, 5), direction=consts.Moves.DOWN, name=loop)
         food2 = food.duplicate()
 
-        #print (food2.findNext(snake))
+        brain.sequential_model.setWeights(brain2.sequential_model.getWeights())
+
+
+
 
         runSnake(snake, brain, food2, food2.board)
         if loop % 10000 == 1:

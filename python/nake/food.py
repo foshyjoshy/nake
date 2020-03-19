@@ -68,15 +68,25 @@ class RandomIndexGenerator():
 class FoodGenerator():
     """ Handles the snakes food random state"""
 
-    def __init__(self, board, pos, indexGenerator=None):
-        if indexGenerator is None:
-            indexGenerator = RandomIndexGenerator()
+    BOARD = "board"
+    POSITION = "position"
+    INDEX_GENERATOR = "index_generator"
+
+
+    def __init__(self, board, position, index_generator=None):
+        if index_generator is None:
+            index_generator = RandomIndexGenerator()
+
+        if isinstance(board, dict):
+            board = Board(**board)
+        if isinstance(index_generator, dict):
+            index_generator = RandomIndexGenerator(**index_generator)
 
         assert isinstance(board, Board)
-        assert isinstance(indexGenerator, RandomIndexGenerator)
-        self._indexGenerator = indexGenerator
+        assert isinstance(index_generator, RandomIndexGenerator)
+        self._indexGenerator = index_generator
 
-        self._initialPos = np.array(pos)
+        self._initialPos = np.array(position)
         self._initialPos.flags.writeable = False
 
         self.board = board
@@ -85,14 +95,29 @@ class FoodGenerator():
         self._count = 0
 
         # Checking if our point is inside the board.
-        if not self.board.inside(pos):
+        if not self.board.inside(position):
             raise Exception("Starting food position is outside board")
 
-        self._pos = np.array(pos, dtype=int)
+        self._pos = np.array(position, dtype=int)
         self._pos.flags.writeable = False
 
     def __str__(self):
         return "FG {} count {} status {}".format(self.pos, self.count, self.status)
+
+
+    def __getstate__(self):
+        return {
+            self.BOARD : self.board.__getstate__(),
+            self.POSITION : self._initialPos.tolist(),
+            self.INDEX_GENERATOR : self._indexGenerator.__getstate__(),
+        }
+
+    def duplicate(self, keepBoard=True, initialState=False):
+        """ Returns a copy of this class """
+        state = self.__getstate__()
+        if keepBoard:
+            state[self.BOARD] = self.board
+        return self.__class__(**state)
 
     def __array__(self):
         return self.pos
@@ -101,25 +126,6 @@ class FoodGenerator():
     def pos(self):
         """ Returns the pos"""
         return self._pos
-
-    def copy(self, keepBoard=True):
-        """ Returns a copy of this class """
-        cls = copy.deepcopy(self)
-        if keepBoard:
-            cls.board = self.board
-        return cls
-
-    def duplicate(self, keepBoard=True, initialState=False):
-        """ Returns a copy of this class """
-        if keepBoard:
-            board = self.board
-        else:
-            board = copy.deepcopy(self.board)
-        return self.__class__(
-            board,
-            copy.deepcopy(self._initialPos),
-            indexGenerator=self._indexGenerator.duplicate(initialState=initialState)
-        )
 
     @property
     def shape(self):
@@ -170,9 +176,11 @@ class FoodGenerator():
         return self.pos
 
 
+
 if __name__ == "__main__":
 
     import consts
+    import pprint
 
     board = Board.fromDims(12, 6)
     food = FoodGenerator(board, (2, 2))
@@ -188,6 +196,11 @@ if __name__ == "__main__":
         food.findNext(snake)
         im[food.pos[1], food.pos[0]] += 1
         # plt.show()
+
+
+    pprint.pprint (food.__getstate__())
+    #quit()
+
 
     food2 = food.duplicate()
     print(food2.findNext(snake))
