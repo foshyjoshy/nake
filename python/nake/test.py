@@ -18,6 +18,9 @@ def runSnake(snake, brain, food, board):
     while snake.length < board.size:
 
         #Running brain
+
+        print (snake, board, food)
+
         moveIdx = brain.computeMove(snake, board, food)
         snake.move(consts.Moves(moveIdx))
 
@@ -50,10 +53,11 @@ def runSnake(snake, brain, food, board):
         if snake.unableToMove():
             break
 
-        # im = snake.generatePreviewImage(board)
-        # im[food.pos[1], food.pos[0]] = 127
-        # plt.imshow(im, vmin=0)
-        # plt.show()
+    im = snake.generatePreviewImage(board)
+    im[food.pos[1], food.pos[0]] = 127
+    plt.imshow(im, vmin=0)
+    plt.title("{}".format(snake))
+    plt.show()
 
     #print(consts.Moves(moveIdx))
 
@@ -73,13 +77,18 @@ if __name__ == "__main__":
 
         brain = BasicBrain.create(name="snake01")
         snake = Snake.initializeAtPosition((5, 5), direction=consts.Moves.DOWN, name=loop)
-        food2 = food.duplicate()
+        #food2 = food.duplicate()
 
         brain.sequential_model.setWeights(brain2.sequential_model.getWeights())
 
 
+        move2 = brain2.computeMove(snake, board, food)
+        move = brain.computeMove(snake, board, food)
+        print (move, move2)
 
 
-        runSnake(snake, brain, food2, food2.board)
-        if loop % 10000 == 1:
-            print ("Loop", loop)
+
+        #
+        # runSnake(snake, brain, food2, food2.board)
+        # if loop % 10000 == 1:
+        #     print ("Loop", loop)

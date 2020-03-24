@@ -90,7 +90,6 @@ class BasicBrain(BrainBase):
         else:
             self.sequential_model.input_arr[4:6, 0] = 0
         snake.moves2Self(moves=self.sequential_model.input_arr[6:14, 0])
-
         return self.sequential_model.compute()
 
 
@@ -105,6 +104,5 @@ if __name__ == "__main__":
 
     print (brain2.__getstate__())
 
-
-
+    computeMove
 

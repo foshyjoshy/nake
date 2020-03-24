@@ -102,7 +102,7 @@ class FoodGenerator():
         self._pos.flags.writeable = False
 
     def __str__(self):
-        return "FG {} count {} status {}".format(self.pos, self.count, self.status)
+        return "FG {} count {} status {}".format(self.pos, self._indexGenerator._count, self._status)
 
 
     def __getstate__(self):

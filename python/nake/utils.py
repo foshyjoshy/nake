@@ -13,6 +13,7 @@ def moves2Body(headPos, bodyPositions, angles=consts.ANGLES_45, moves=None):
     if moves is None:
         moves = np.ones(len(angles), dtype=np.float32) * -1
 
+
     # Getting angle
     diff = (bodyPositions-headPos).astype(np.float32)
 
@@ -24,6 +25,8 @@ def moves2Body(headPos, bodyPositions, angles=consts.ANGLES_45, moves=None):
         idxs = np.where(val == angle)[0]
         if idxs.shape[0]:
             moves[idx] = np.min(dist[idxs])
+        else:
+            moves[idx] = -1
 
     return moves
 
