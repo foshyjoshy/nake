@@ -81,6 +81,8 @@ class FoodGenerator():
             board = Board(**board)
         if isinstance(index_generator, dict):
             index_generator = RandomIndexGenerator(**index_generator)
+        elif not isinstance(index_generator, RandomIndexGenerator):
+            index_generator = RandomIndexGenerator(index_generator)
 
         assert isinstance(board, Board)
         assert isinstance(index_generator, RandomIndexGenerator)

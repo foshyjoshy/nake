@@ -1,7 +1,9 @@
 import numpy as np
+from abc import abstractmethod
 from registry import Registry, RegistryItemBase
 from activations import Activation, Tanh
 from logging import debug
+import math
 
 
 
@@ -18,6 +20,11 @@ class SequentialModel():
 
         self.layers = layers
         self.input_arr = self.generateRandomInputs()
+
+    def __str__(self):
+        return "SequentialModel(n_inputs {} n_outputs {} n_layers {})".format(
+            self.n_inputs, self.n_outputs, self.n_layers)
+
 
     def __iter__(self):
         for elem in self.layers:
@@ -38,6 +45,11 @@ class SequentialModel():
     def n_outputs(self):
         """ Returns """
         return self.layers[-1].n_outputs
+
+    @property
+    def n_layers(self):
+        """ Returns """
+        return len(self.layers)
 
     def generateRandomInputs(self, minval=0, maxval=20):
         """ Generate random inputs values for testing"""
@@ -69,9 +81,11 @@ class SequentialModel():
             name, arr_name = name.rsplit("_", 1)
             self.layerByName(name).setArr(arr_name, arr)
 
-
-
-
+    def mutate(self, percent=5):
+        """ Mutates a percentage of the non-locked weights """
+        # This is very basic mutation
+        for layer in self:
+            layer.mutate(percent=percent)
 
 
 
@@ -92,6 +106,11 @@ class LayerBase(RegistryItemBase):
 
     BIASES = "biases"
     WEIGHTS = "weights"
+
+    @abstractmethod
+    def mutate(self, percent=5):
+        """ Mutates a percentage of the non-locked weights """
+        pass
 
 
 
@@ -119,9 +138,12 @@ class Dense(LayerBase):
 
         # Between -1 and 1
         self.weights = (np.random.random([n_outputs, n_inputs]) * 2 - 1)
-
         # Between -1 and 1
         self.biases = (np.random.random([n_outputs, 1]) * 2 - 1) * 0.001
+
+        # Mutation mask ... create only once.
+        self.mutation_mask = np.zeros_like(self.weights)
+
 
 
     def setWeights(self, weights):
@@ -170,11 +192,27 @@ class Dense(LayerBase):
             raise Exception("{} is not a valid array name".format(name))
 
 
+    def mutate(self, percent=2, setvalues=False):
+        """ Mutates a percentage of the non-locked weights """
+        # Using ceil makes sure at least one weight is mutates
+        mutate_number = math.ceil((float(self.weights.size)/100)*percent)
+
+        # Getting mutate_number of weight indexes
+        float_indexes = np.random.random_sample(mutate_number)
+        indexes = np.unique((float_indexes*self.weights.size).astype(int))
+        indexes = np.unravel_index(indexes, self.weights.shape)
+
+        random_values = np.random.random_sample(indexes[0].shape[0])*2-1
+
+        if setvalues:
+            # Setting random weights between -1 and 0
+            self.weights[indexes] = random_values
+        else:
+            self.weights[indexes] = np.clip(self.weights[indexes] + (random_values*0.1), -1, 1)
 
 
 
 if __name__ == "__main__":
-
 
     layer = Layer("dense", "input_layer", 10, 20)
     layer2 = Layer("dense", "output_layer", 20, 4)
@@ -189,6 +227,6 @@ if __name__ == "__main__":
 
     # Checking if both outs generate the same value
     print (model2.compute(model.input_arr))
+    model.mutate(25)
     print (model.compute())
-
 

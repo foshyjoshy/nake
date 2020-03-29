@@ -53,13 +53,13 @@ class Registry():
         return cls.registry.get(name, value)
 
     @classmethod
-    def getInitialized(cls, name, *args, **kwargs):
+    def getInitialized(cls, class_name, *args, **kwargs):
         """ Returns registered initialized activation with name"""
-        if cls.isNameRegistered(name):
-            return cls.get(name)(*args, **kwargs)
+        if cls.isNameRegistered(class_name):
+            return cls.get(class_name)(*args, **kwargs)
         else:
             raise Exception("Nothing has been registered \
-                with name \"{}\". Available {}".format(name, cls._registry))
+                with name \"{}\". Available {}".format(class_name, cls.registry))
 
     @classmethod
     def registeredNames(self):

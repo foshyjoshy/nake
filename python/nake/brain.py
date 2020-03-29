@@ -19,6 +19,12 @@ class BrainBase(RegistryItemBase):
     def __init__(self, name):
         self.name = name
 
+    def __str__(self):
+        return "name={}".format(self.name)
+
+    def __repr__(self):
+        return self.name
+
     @abstractmethod
     def crossover(self, brain2):
         """ Mixes two brains together"""
@@ -36,6 +42,13 @@ class BrainBase(RegistryItemBase):
     def __getstate__(self):
         """ Returns the state of the brain"""
         return {**super().__getstate__(),self.NAME : self.name}
+
+    def duplicate(self, name=None):
+        """ Duplicate object """
+        state = self.__getstate__()
+        if name is not None:
+            state[self.NAME] = name
+        return Brains.getInitialized(**state)
 
 
 
@@ -55,6 +68,10 @@ class BasicBrain(BrainBase):
         self.sequential_model = sequential_model
         super().__init__(*args, **kwargs)
 
+
+    def __str__(self):
+        return "{} {}".format(super().__str__(), self.sequential_model)
+
     @classmethod
     def create(cls, n_inputs=14, n_hidden_inputs=16, n_outputs=4, **kwargs):
         """ Sets up a basic brain class"""
@@ -71,8 +88,8 @@ class BasicBrain(BrainBase):
         pass
 
     def mutate(self, percent=5):
-        """ Mutates a percentage of the non-locked networks weights """
-        pass
+        """ Runs sequential model mutation"""
+        self.sequential_model.mutate(percent=percent)
 
     def __getstate__(self):
         """ Returns the state of the brain"""
@@ -91,6 +108,14 @@ class BasicBrain(BrainBase):
             self.sequential_model.input_arr[4:6, 0] = 0
         snake.moves2Self(moves=self.sequential_model.input_arr[6:14, 0])
         return self.sequential_model.compute()
+
+
+    def duplicate(self, *args, weights=True, **kwargs):
+        """ Duplicate object """
+        brain = super().duplicate(*args, **kwargs)
+        if weights:
+            brain.sequential_model.setWeights(self.sequential_model.getWeights())
+        return brain
 
 
 
