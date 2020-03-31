@@ -192,7 +192,7 @@ class Dense(LayerBase):
             raise Exception("{} is not a valid array name".format(name))
 
 
-    def mutate(self, percent=2, setvalues=False):
+    def mutate(self, percent=2, setvalues=True):
         """ Mutates a percentage of the non-locked weights """
         # Using ceil makes sure at least one weight is mutates
         mutate_number = math.ceil((float(self.weights.size)/100)*percent)
