@@ -27,7 +27,6 @@ class Moves(bytes, Enum):
 
 
 
-
 class Terminated(bytes, Enum):
     """ Stores how the snake was terminated"""
 

@@ -29,10 +29,7 @@ def runSnake(snake, brain, food, board, savedir=None, length=2):
 
         move = consts.Moves(brain.computeMove(snake, board, food))
 
-        #Check if move is not opposite
-        if snake.direction.isOpposite(move):
-            print (snake.direction, move)
-            quit()
+
 
 
         snake.move(move)
@@ -45,29 +42,29 @@ def runSnake(snake, brain, food, board, savedir=None, length=2):
                 snake.feed()
                 food.findNext(snake)
 
-                if snake.length >= length:
-
-
-                    dirname = 'C:\\Users\\colyt\\OneDrive\\Documents\\snake'
-                    path = os.path.join(dirname, 'snake.{:04d}.png'.format(length))
-
-
-                    weightspath = os.path.join(savedir, "weights.%04i.npz"%(length))
-                    jsonpath = os.path.join(savedir, "brain.%04i.json"%(length))
-
-                    with open(jsonpath, "w") as FILE:
-                        json.dump(brain.__getstate__(), FILE, indent=4, sort_keys=True)
-
-                    np.savez(weightspath, **brain.sequential_model.getWeights())
-
-                    im = snake.generatePreviewImage(board)
-                    im[food.pos[1], food.pos[0]] = 62
-
-                    #fig = plt.Figure()
-                    plt.imshow(im, vmin=0)
-                    plt.title("{}".format(snake))
-                    plt.savefig(path)
-                    return snake.length
+                # if snake.length >= length:
+                #
+                #
+                #     dirname = 'C:\\Users\\colyt\\OneDrive\\Documents\\snake'
+                #     path = os.path.join(dirname, 'snake.{:04d}.png'.format(length))
+                #
+                #
+                #     weightspath = os.path.join(savedir, "weights.%04i.npz"%(length))
+                #     jsonpath = os.path.join(savedir, "brain.%04i.json"%(length))
+                #
+                #     with open(jsonpath, "w") as FILE:
+                #         json.dump(brain.__getstate__(), FILE, indent=4, sort_keys=True)
+                #
+                #     np.savez(weightspath, **brain.sequential_model.getWeights())
+                #
+                #     im = snake.generatePreviewImage(board)
+                #     im[food.pos[1], food.pos[0]] = 62
+                #
+                #     #fig = plt.Figure()
+                #     plt.imshow(im, vmin=0)
+                #     plt.title("{}".format(snake))
+                #     plt.savefig(path)
+                #     return snake.length
 
         if board.outside(snake.headPosition):
             break
@@ -99,31 +96,36 @@ if __name__ == "__main__":
 
     savedir = r"C:\Users\colyt\OneDrive\Documents\snake"
     board = Board.fromDims(10, 10)
-    food = FoodGenerator(board, (5,8), 10)#2321)
+    food = FoodGenerator(board, (1,1), 2321)
     snake = Snake.initializeAtPosition((5, 5), direction=consts.Moves.DOWN, name="loop")
 
 
-    for iiiii in range(15, 200):
 
-        brainPath = r"C:\Users\colyt\OneDrive\Documents\snake\brain.%04i.json"%(iiiii-1)
-        with open(brainPath, "r") as FILE:
-            di = json.load(FILE)
-            brain = Brains.getInitialized(**di)
-            weights = np.load(r"C:\Users\colyt\OneDrive\Documents\snake\weights.%04i.npz"%(iiiii-1))
-            #brain.sequential_model.setWeights(weights)
-            #print ("brainPath", brainPath)
+    brainPath = r"C:\Users\colyt\OneDrive\Documents\snake\brain.%04i.json"%(15)
+    with open(brainPath, "r") as FILE:
+        di = json.load(FILE)
+        brain = Brains.getInitialized(**di)
+        weights = np.load(r"C:\Users\colyt\OneDrive\Documents\snake\weights.%04i.npz"%(15))
+        brain.sequential_model.setWeights(weights)
+        print ("brainPath", brainPath)
 
-        mlength = 0
-        loop=0
-        while True:
-            loop+=1
 
-            food2 = food.duplicate()
-            snake2 = Snake.initializeAtPosition((5, 5), direction=consts.Moves.DOWN, name=loop)
-            brain2 = brain.duplicate(name="brain%i"%(loop), weights=False)
-            #brain2.mutate(2)
+    food2 = food.duplicate()
+    snake2 = Snake.initializeAtPosition((5, 5), direction=consts.Moves.DOWN, name=1, history=True)
+    brain2 = brain.duplicate(name="brain%i"%(1), weights=True)
+    runSnake(snake2, brain2, food2, food2.board)
 
-            run.runSnake(brain2, brain2, food2, food2.board)
+    food3 = food.duplicate()
+    snake3 = Snake.initializeAtPosition((5, 5), direction=consts.Moves.DOWN, name=2, history=True)
+    brain3 = brain.duplicate(name="brain%i" % (2), weights=True)
+    runSnake(snake3, brain3, food3, food3.board)
 
-            print ("done")
-            quit()
+    print (snake2.history.arr)
+    print(np.count_nonzero(snake2.history.arr == 4))
+    print (snake2.history == snake3.history)
+
+
+
+
+    print ("done")
+    quit()

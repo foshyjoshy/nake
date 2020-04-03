@@ -2,13 +2,94 @@ import numpy as np
 import consts
 from logging import debug
 import utils
+from enum import IntEnum
+from time import time
+
+
+
+class SnakeActions(IntEnum):
+    """ Enum to store all available snake actions"""
+    MOVE_UP = 0
+    MOVE_DOWN = 1
+    MOVE_LEFT = 2
+    MOVE_RIGHT = 3
+    EAT = 4
+
+
+class SnakeHistory():
+    """ Simple way to store snake and check snake movement history """
+
+    DEFAULT_LENGTH = 10
+
+    MOVES_TO_ACTION = {
+        consts.Moves.UP : SnakeActions.MOVE_UP,
+        consts.Moves.DOWN: SnakeActions.MOVE_DOWN,
+        consts.Moves.LEFT: SnakeActions.MOVE_LEFT,
+        consts.Moves.RIGHT: SnakeActions.MOVE_RIGHT,
+    }
+
+    def __init__(self, headIndex, historyArr):
+        self._index = headIndex
+        self._historyArr = historyArr
+
+    def __eq__(self, other):
+        if not isinstance(other, self.__class__):
+            #raise Exception("{} is not instance {}".format(other, self.__class__))
+            return False
+        elif not other.arr.shape == self.arr.shape:
+            return False
+        else:
+            return np.all(other.arr==self.arr)
+
+    @classmethod
+    def createEmpty(cls, length=None):
+        """ Create an empty history object"""
+        historyArray = np.zeros(cls.DEFAULT_LENGTH if length is None else length, dtype=np.int32)
+        return cls(0, historyArray)
+
+    @property
+    def arr(self):
+        """ returns history array view"""
+        return self._historyArr[:self._index]
+
+    @property
+    def size(self):
+        """ Returns the size of the history stack"""
+        return self._index
+
+    def expand(self, n=None):
+        """ Expands the_historyArr arr by n values"""
+        if n is None: n = self._historyArr.shape[0]
+        debug("Expanding history by {}".format(n))
+        self._historyArr = np.hstack([self._historyArr,
+                np.zeros([n], dtype=self._historyArr.dtype)])
+
+    def add(self, value):
+        """ add to history"""
+        if self._index == self._historyArr.shape[0]:
+            self.expand()
+        self._historyArr[self._index] = value
+        self._index += 1
+
+    def addMove(self, move):
+        """ Add move history stack """
+        self.add(self.MOVES_TO_ACTION[move])
+
+    def addEat(self):
+        """ Add eat action history stack"""
+        self.add(SnakeActions.EAT)
+
+    def toActions(self):
+        """ Turns numpy arr into SnakeActions """
+        return map(SnakeActions, self._historyArr)
+
 
 
 class Snake():
-
+    """ Snake class """
 
     def __init__(self, headIdx, length, direction,
-                 positions, movesRemaining=200, name=None):
+                 positions, movesRemaining=200, name=None, history=None):
         if not positions.dtype == consts.DTYPE_SNAKE:
             TypeError('{} dtype arr expected'.format(consts.DTYPE_SNAKE))
 
@@ -18,6 +99,7 @@ class Snake():
         self._positions = positions
         self.movesRemaining = movesRemaining
         self.name = name or ""
+        self.history = history
 
         self.updatePositionalView()
 
@@ -30,7 +112,7 @@ class Snake():
     #     return self.bodyPositions
 
     @classmethod
-    def initializeAtPosition(cls, position, direction=consts.Moves.DOWN, length=4, **kwargs):
+    def initializeAtPosition(cls, position, direction=consts.Moves.DOWN, length=4, history=False, **kwargs):
         """ Starts from (x,y) moving in direction with length"""
 
         _positions = np.ones([max(length*2+1, 64), 2], dtype=consts.DTYPE_SNAKE)*-1
@@ -47,7 +129,12 @@ class Snake():
         else:
             raise Exception("{} it not a valid direction... using one of {}".format(direction, consts.Moves))
 
-        return cls(_positions.shape[0]-length, length, direction, _positions, **kwargs)
+        if history:
+            history = SnakeHistory.createEmpty()
+        else:
+            history = None
+
+        return cls(_positions.shape[0]-length, length, direction, _positions, history=history, **kwargs)
 
 
     @property
@@ -92,6 +179,9 @@ class Snake():
             self.updatePositionalView()
         self.movesRemaining+=increaseMovesBy
 
+        if self.history is not None:
+            self.history.addEat()
+
     def move(self, direction=None, feed=False):
         """ Moves snake along this direction"""
         if direction is None:
@@ -109,9 +199,14 @@ class Snake():
         self._positions[self.headIdx] = self._positions[self.headIdx+1]+direction.arr
         self.direction = direction
 
+        # Adding move to history
+        if self.history is not None:
+            self.history.addMove(self.direction)
+
         # Check if we need increase the snake length
         if feed:
             self.feed(updateArrView=False)
+
 
         # Update view to stay in sync
         self.updatePositionalView()
@@ -171,58 +266,17 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger(__name__)
 
-
-
     from board import Board
     board = Board.fromDims(10, 10)
-    print (board)
 
+    snake = Snake.initializeAtPosition((0,4), direction=consts.Moves.UP, length=6, history=True)
+    a = time()
+    for i in range(10):
+        snake.moveLeft()
+    print (time()-a)
+    print (snake.history.arr)
 
-    import time
-    snake = Snake.initializeAtPosition((0,4), direction=consts.Moves.UP, length=6)
+    for i in snake.history.toActions():
+        print (i)
 
-
-
-
-    a = time.time()
-    snake.moveRight(feed=True)
-    snake.moveRight(feed=True)
-    snake.moveRight(feed=True)
-    snake.moveRight(feed=True)
-    snake.moveDown(feed=True)
-    snake.moveDown(feed=True)
-    snake.moveLeft()
-    snake.moveLeft()
-    snake.moveUp()
-    print(snake)
-    print (snake.moves2Self())
-    print (snake.moves2BoardEdges(board))
-    im= snake.generatePreviewImage(board)
-    # plt.imshow(im, cmap="gray")
-    # plt.show()
-    #
-    #
-    # quit()
-
-
-
-    snake.moveLeft(feed=True)
-    snake.moveLeft(feed=True)
-    snake.moveDown(feed=True)
-    snake.moveDown(feed=True)
-    snake.moveDown(feed=True)
-    snake.moveRight(feed=True)
-    snake.moveRight(feed=True)
-    snake.moveUp(feed=True)
-    print (snake)
-
-
-    self = snake
-    #
-    a = time.time()
-    diff = self.positions[1:]-self.positions[0]
-    distances = np.ones([8])*-1
-    for i in range(1000):
-        self.moveLeft()
-    print (time.time()-a)
-    print (distances)
+    print ([SnakeActions.MOVE_UP.value])
