@@ -11,6 +11,12 @@ import os
 import multiprocessing
 import json
 
+import run
+
+import logging
+
+
+import run
 
 
 def runSnake(snake, brain, food, board, savedir=None, length=2):
@@ -117,11 +123,7 @@ if __name__ == "__main__":
             brain2 = brain.duplicate(name="brain%i"%(loop), weights=False)
             #brain2.mutate(2)
 
-            mlength = max(mlength, runSnake(snake2, brain2, food2, food2.board, savedir=savedir, length=iiiii))
-            if mlength == iiiii:
-                break
+            run.runSnake(brain2, brain2, food2, food2.board)
 
-
-            if loop % 1000 == 1:
-                print ("Looking for", iiiii, "Loop", loop, mlength)
-            print (snake2)
+            print ("done")
+            quit()
