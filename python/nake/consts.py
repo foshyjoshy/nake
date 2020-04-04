@@ -1,5 +1,5 @@
 import numpy as np
-from enum import Enum
+from enum import Enum, IntEnum
 
 DTYPE_SNAKE = np.int32
 PI2 = np.pi*2
@@ -27,7 +27,7 @@ class Moves(bytes, Enum):
 
 
 
-class Terminated(bytes, Enum):
+class Terminated(IntEnum):
     """ Stores how the snake was terminated"""
 
     UNABLE_TO_MOVE = "Unable to move"
@@ -37,7 +37,8 @@ class Terminated(bytes, Enum):
 
     def __new__(cls, text):
         value = len(cls.__members__)
-        obj = bytes.__new__(cls, [value])
+        obj = int.__new__(cls, value)
         obj._value_ = value
         obj.text = text
         return obj
+

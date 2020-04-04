@@ -17,7 +17,7 @@ class SnakeActions(IntEnum):
 
 
 class SnakeHistory():
-    """ Simple way to store snake and check snake movement history """
+    """ Simple way to store snake history and check snake movement history """
 
     DEFAULT_LENGTH = 10
 
@@ -58,7 +58,7 @@ class SnakeHistory():
         return self._index
 
     def expand(self, n=None):
-        """ Expands the_historyArr arr by n values"""
+        """ Expands historyArr arr by n values"""
         if n is None: n = self._historyArr.shape[0]
         debug("Expanding history by {}".format(n))
         self._historyArr = np.hstack([self._historyArr,
@@ -107,6 +107,9 @@ class Snake():
     def __str__(self):
         return "Snake name:{} headPos:{} direction:{} length:{} remaining moves:{}"\
             .format(self.name, self.headPosition, self.direction, self.length, self.movesRemaining)
+
+    def __len__(self):
+        return self.length
 
     # def __array__(self):
     #     return self.bodyPositions
