@@ -26,14 +26,18 @@ class BrainBase(RegistryItemBase):
         return self.name
 
     @abstractmethod
+    def mutate(self, percent=5):
+        """ Mutates a percentage of the non-locked networks weights """
+        pass
+
+    @abstractmethod
     def crossover(self, brain2):
         """ Mixes two brains together"""
         pass
 
     @abstractmethod
-    def mutate(self, percent=5):
-        """ Mutates a percentage of the non-locked networks weights """
-        pass
+    def isCrossCompatible(self, other):
+        """ Checks if other brain is cross compatible"""
 
     @abstractmethod
     def computeMove(self, snake, board, food):
@@ -83,13 +87,22 @@ class BasicBrain(BrainBase):
                          ])
         return cls(sequential_model,**kwargs)
 
-    def crossover(self, brain2):
-        """ Mixes two brains together"""
-        pass
+    def isCrossCompatible(self, other):
+        """ Checks if other brain is cross compatible"""
+        return isinstance(other, BasicBrain)
+
+    def crossover(self, *others):
+        """ Mixes brains together """
+        for other in others:
+            if not self.isCrossCompatible(other):
+                raise Exception("Unable to crossover {} with {}".format(other, self))
+        if not len(others):
+            raise Exception("Why are you trying to crossover with nothing?")
+        return self.sequential_model.crossover(*[other.sequential_model for other in others])
 
     def mutate(self, percent=5):
         """ Runs sequential model mutation"""
-        self.sequential_model.mutate(percent=percent)
+        return self.sequential_model.mutate(percent=percent)
 
     def __getstate__(self):
         """ Returns the state of the brain"""
@@ -97,7 +110,6 @@ class BasicBrain(BrainBase):
             **super().__getstate__(),
             self.SEQUENTIAL_MODEL: self.sequential_model.getStateList(),
                 }
-
 
     def computeMove(self, snake, board, food):
         """ Computes snakes move"""
@@ -108,7 +120,6 @@ class BasicBrain(BrainBase):
             self.sequential_model.input_arr[4:6, 0] = 0
         snake.moves2Self(moves=self.sequential_model.input_arr[6:14, 0])
         return self.sequential_model.compute()
-
 
     def duplicate(self, *args, weights=True, **kwargs):
         """ Duplicate object """

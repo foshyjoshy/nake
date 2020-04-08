@@ -64,7 +64,17 @@ if __name__ == "__main__":
     food2 = food.duplicate()
     snake2 = Snake.initializeAtPosition((5, 5), direction=consts.Moves.DOWN, name=1, history=True)
     brain2 = brain.duplicate(name="brain%i"%(1), weights=False)
-    print ("ss", run.runSnake(snake2, brain2, food2, food2.board))
+
+
+    brain2 = brain.duplicate(weights=False)
+    brain3 = brain.duplicate(weights=False)
+
+    result = brain.crossover(brain2, brain3)
+
+    print (result[-1][0])
+    print (brain.sequential_model[-1].weights)
+
+    #print ("ss", run.runSnake(snake2, brain2, food2, food2.board))
 
 
     quit()

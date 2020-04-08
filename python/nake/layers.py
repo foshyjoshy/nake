@@ -22,13 +22,15 @@ class SequentialModel():
         self.input_arr = self.generateRandomInputs()
 
     def __str__(self):
-        return "SequentialModel(n_inputs {} n_outputs {} n_layers {})".format(
+        return "SequentialModel({}x{}x{})".format(
             self.n_inputs, self.n_outputs, self.n_layers)
-
 
     def __iter__(self):
         for elem in self.layers:
             yield elem
+
+    def __getitem__ (self, index):
+        return self.layers[index]
 
     def layerByName(self, name):
         """ returns the layer for the given name"""
@@ -81,11 +83,38 @@ class SequentialModel():
             name, arr_name = name.rsplit("_", 1)
             self.layerByName(name).setArr(arr_name, arr)
 
+    def isCrossCompatible(self, other):
+        """ Checks if the other model is cross compatible """
+        if isinstance(other, SequentialModel):
+            if other.n_layers == self.n_layers:
+                for idx, layer in enumerate(self.layers):
+                    if not layer.isCrossCompatible(other.layers[idx]):
+                        break
+                else:
+                    return True
+        return False
+
     def mutate(self, percent=5):
         """ Mutates a percentage of the non-locked weights """
         # This is very basic mutation
-        for layer in self:
-            layer.mutate(percent=percent)
+        percentages = np.random.randint(percent+1, size=self.n_layers)
+        for idx, layer in enumerate(self):
+            layer.mutate(percent=percentages[idx])
+
+    def crossover(self, *others):
+        """ Crossing n number of layers """
+
+        # Checking if others are cross compatible
+        for other in others:
+            if not self.isCrossCompatible(other):
+                raise Exception("Unable to crossover {} with {}".format(other, self))
+
+        results = []
+        # Crossing over layers
+        for idx, layer in enumerate(self):
+            results.append(layer.crossover(*[other[idx] for other in others]))
+        return results
+
 
 
 
@@ -111,6 +140,15 @@ class LayerBase(RegistryItemBase):
     def mutate(self, percent=5):
         """ Mutates a percentage of the non-locked weights """
         pass
+
+    @abstractmethod
+    def isCrossCompatible(self, other):
+        """ Checks if other layer is cross compatible"""
+
+    @abstractmethod
+    def crossover(self, *others):
+        """ Crossing n number of layers """
+
 
 
 
@@ -145,6 +183,9 @@ class Dense(LayerBase):
         self.mutation_mask = np.zeros_like(self.weights)
 
 
+    def __str__(self):
+        return "{}({}x{},use_bias={})".format(
+            self.__class__.__name__, self.n_inputs, self.n_outputs, self.use_bias)
 
     def setWeights(self, weights):
         """ Setting weights on layer (n_outputs x n_inputs) """
@@ -191,7 +232,6 @@ class Dense(LayerBase):
         else:
             raise Exception("{} is not a valid array name".format(name))
 
-
     def mutate(self, percent=2, setvalues=True):
         """ Mutates a percentage of the non-locked weights """
         # Using ceil makes sure at least one weight is mutates
@@ -209,6 +249,39 @@ class Dense(LayerBase):
             self.weights[indexes] = random_values
         else:
             self.weights[indexes] = np.clip(self.weights[indexes] + (random_values*0.1), -1, 1)
+
+    def isCrossCompatible(self, other):
+        """ Checks if other layer is cross compatible"""
+        if isinstance(other, self.__class__):
+            return self.weights.shape == other.weights.shape
+        else:
+            return False
+
+    def crossover(self, *others):
+        """ Crossing n number of layers """
+        for other in others:
+            if not self.isCrossCompatible(other):
+                raise Exception("{} is not cross compatible with {}".format(self, other))
+
+        # Crossover Weights
+        weight_mask = np.random.randint(len(others)+1, size=self.weights.shape)
+        for idx, other in enumerate(others, start=1):
+            mask = weight_mask == idx
+            self.weights[mask] = other.weights[mask]
+
+        # Crossover Biases
+        biases_mask = np.random.randint(len(others)+1, size=self.biases.shape)
+        for idx, other in enumerate(others, start=1):
+            mask = biases_mask == idx
+            self.biases[mask] = other.biases[mask]
+
+        # Crossover use_bias
+        bias_index = np.random.random_integers(0, len(others))
+        if bias_index > 0:
+            self.use_bias = others[bias_index-1].use_bias
+
+        return (weight_mask, biases_mask, bias_index)
+
 
 
 
