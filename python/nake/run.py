@@ -51,3 +51,13 @@ def runSnake(snake, brain, foodGenerator, board):
         term = Terminated.UNABLE_TO_MOVE
 
     return term
+
+
+
+
+
+
+
+
+
+

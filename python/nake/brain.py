@@ -1,6 +1,7 @@
 from registry import Registry, RegistryItemBase
 from abc import abstractmethod
 from layers import SequentialModel, Dense
+import copy
 import consts
 
 
@@ -26,7 +27,7 @@ class BrainBase(RegistryItemBase):
         return self.name
 
     @abstractmethod
-    def mutate(self, percent=5):
+    def mutate(self, rate=5):
         """ Mutates a percentage of the non-locked networks weights """
         pass
 
@@ -42,6 +43,15 @@ class BrainBase(RegistryItemBase):
     @abstractmethod
     def computeMove(self, snake, board, food):
         """ Computes snakes move"""
+
+    @abstractmethod
+    def getArrs(self):
+        """ Returns a dict of numpy arrays for saving"""
+
+    @abstractmethod
+    def setArrs(self, arrs):
+        """ Sets the input arrays on the brain """
+
 
     def __getstate__(self):
         """ Returns the state of the brain"""
@@ -100,15 +110,26 @@ class BasicBrain(BrainBase):
             raise Exception("Why are you trying to crossover with nothing?")
         return self.sequential_model.crossover(*[other.sequential_model for other in others])
 
-    def mutate(self, percent=5):
+    def mutate(self, rate=5):
         """ Runs sequential model mutation"""
-        return self.sequential_model.mutate(percent=percent)
+        return self.sequential_model.mutate(percent=rate)
+
+
+    def getArrs(self):
+        """ Returns a dict of numpy arrays for saving"""
+        return dict([("{}_{}".format(self.name, key), arr) for key, arr
+                in self.sequential_model.getWeights().items()])
+
+    def setArrs(self, arrs):
+        """ Sets the input arrays on the brain """
+        raise NotImplemented()
+
 
     def __getstate__(self):
         """ Returns the state of the brain"""
         return {
             **super().__getstate__(),
-            self.SEQUENTIAL_MODEL: self.sequential_model.getStateList(),
+            self.SEQUENTIAL_MODEL: copy.deepcopy(self.sequential_model.getStateList()),
                 }
 
     def computeMove(self, snake, board, food):
@@ -121,12 +142,131 @@ class BasicBrain(BrainBase):
         snake.moves2Self(moves=self.sequential_model.input_arr[6:14, 0])
         return self.sequential_model.compute()
 
-    def duplicate(self, *args, weights=True, **kwargs):
+    def duplicate(self, *args, weights=True, weights_copy=True, **kwargs):
         """ Duplicate object """
         brain = super().duplicate(*args, **kwargs)
         if weights:
-            brain.sequential_model.setWeights(self.sequential_model.getWeights())
+            brain.sequential_model.setWeights(self.sequential_model.getWeights(return_copy=weights_copy))
         return brain
+
+
+
+
+
+def crossover(name, *brains):
+    """ Runs a cross over of the input brains """
+    if  len(brains) < 2:
+        raise Exception("Unable to run cross over with less that 2 brains")
+    new_brain = brains[0].duplicate(name, weights=True,weights_copy=True )
+    new_brain.crossover(*brains[1:])
+    return new_brain
+
+
+
+
+
+
+
+
+
+
+class BrainGenerators(Registry):
+    """ A class where we store all the brain generators"""
+    registry = {}
+
+
+
+class BrainGeneratorBase(RegistryItemBase):
+    """ Base class for BrainGenerators """
+    REGISTRY = BrainGenerators
+
+    DEFAULT_N_GENERATE = 10
+    DEFAULT_MUTATE_RATE = 5
+
+    BRAIN = "brain"
+    N_GENERATE = "n_generate"
+    MUTATE_RATE = "mutate_rate"
+
+    def __init__(self, n_generate=None):
+        self.n_generate = n_generate or self.DEFAULT_N_GENERATE
+        self.n_generated = 0
+
+    def __iter__(self):
+        self.n_generated = 0
+        return self
+
+    def __next__(self):
+        if self.n_generated >= self.n_generate:
+            raise StopIteration
+        self.n_generated += 1
+        return self.generate(self.n_generated-1)
+
+    def __getstate__(self):
+        """ Returns the of the generator"""
+        return {
+            **super().__getstate__(),
+            self.N_GENERATE: self.n_generate,
+                }
+
+    @abstractmethod
+    def generate(self, idx):
+        """  generates and returns new brain"""
+        pass
+
+
+
+class BasicBrainGenerator(BrainGeneratorBase):
+    """ Duplicates input brain without weights"""
+
+    def __init__(self, brain, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        if isinstance(brain, dict):
+            brain = Brains.getInitialized(**brain)
+
+        if not Brains.isObjectRegistered(brain):
+            raise Exception("{} is not a registered brain" \
+                "registered activation. Use {}".format(brain, Brains.registeredClasses()))
+        self.brain = brain
+
+    def generate(self, idx):
+        """  generates and returns new brain"""
+        return self.brain.duplicate(weights=False, weights_copy=False)
+
+
+
+#TODO Add name to generate functions
+
+class CrossoverBrainGenerator(BrainGeneratorBase):
+    """Crossovers input brains"""
+
+    def __init__(self, brains, *args, mutate_rate=None, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        for idx, brain in enumerate(brains):
+            # Converting brain dict (getstate) to Brain objects
+            if isinstance(brain, dict):
+                brains[idx] = Brains(**brain)
+            if not Brains.isObjectRegistered(brains[idx]):
+                raise Exception("{} is not a registered brain" \
+                                "registered activation. Use {}".format(brains[idx], Brains.registeredClasses()))
+
+        self.mutate_rate = mutate_rate or self.DEFAULT_MUTATE_RATE
+        self.brains = brains
+
+    def generate(self, idx):
+        """  generates and returns new brain"""
+        brain = crossover("ss", *self.brains)
+        if self.mutate_rate:
+            brain.mutate(rate=self.mutate_rate)
+        return brain
+
+
+
+
+
+
+
 
 
 
@@ -134,11 +274,22 @@ class BasicBrain(BrainBase):
 
 if __name__ == "__main__":
 
-    brain = BasicBrain.create(name="s")
-    brain2 = Brains(**brain.__getstate__())
-    brain2.sequential_model.compute()
 
-    print (brain2.__getstate__())
+    import time
 
-    computeMove
+
+    b1 = BasicBrain.create(name="b1")
+    b2 = BasicBrain.create(name="b2")
+
+    gen = CrossoverBrainGenerator([b1, b2], n_generate=1000)
+    gen = BasicBrainGenerator(b1, n_generate=1000)
+
+    a = time.time()
+    for i in gen:
+        #print (i)
+        pass
+    print( time.time()-a)
+
+
+
 

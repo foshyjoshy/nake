@@ -68,11 +68,13 @@ class SequentialModel():
         """ Return a list of layer get state"""
         return [layer.__getstate__() for layer in self]
 
-    def getWeights(self):
+    def getWeights(self, return_copy=False):
         """ Returns the array state of all layers"""
         arrWeights= {}
         for layer in self:
             for key, value in layer.getWeights().items():
+                if return_copy:
+                    value = value.copy()
                 arrWeights["{}_{}".format(layer.layer_name, key)] = value
         return arrWeights
 
