@@ -182,12 +182,17 @@ class BrainGeneratorBase(RegistryItemBase):
 
     DEFAULT_N_GENERATE = 10
     DEFAULT_MUTATE_RATE = 5
+    DEFAULT_BRAIN_NAME = "brain_{idx:09d}"
 
-    BRAIN = "brain"
+    BRAIN_NAME = "brain_name"
     N_GENERATE = "n_generate"
     MUTATE_RATE = "mutate_rate"
 
-    def __init__(self, n_generate=None):
+
+
+
+    def __init__(self, n_generate=None, brain_name=None):
+        self.brain_name = brain_name or self.DEFAULT_BRAIN_NAME
         self.n_generate = n_generate or self.DEFAULT_N_GENERATE
         self.n_generated = 0
 
@@ -206,7 +211,11 @@ class BrainGeneratorBase(RegistryItemBase):
         return {
             **super().__getstate__(),
             self.N_GENERATE: self.n_generate,
+            self.BRAIN_NAME: self.brain_name,
                 }
+
+    def generateName(self, idx):
+        return self.brain_name.format(idx=idx)
 
     @abstractmethod
     def generate(self, idx):
@@ -231,11 +240,13 @@ class BasicBrainGenerator(BrainGeneratorBase):
 
     def generate(self, idx):
         """  generates and returns new brain"""
-        return self.brain.duplicate(weights=False, weights_copy=False)
+        return self.brain.duplicate(
+                        name=self.generateName(idx),
+                        weights=False,
+                        weights_copy=False
+                        )
 
 
-
-#TODO Add name to generate functions
 
 class CrossoverBrainGenerator(BrainGeneratorBase):
     """Crossovers input brains"""
@@ -256,7 +267,7 @@ class CrossoverBrainGenerator(BrainGeneratorBase):
 
     def generate(self, idx):
         """  generates and returns new brain"""
-        brain = crossover("ss", *self.brains)
+        brain = crossover(self.generateName(idx), *self.brains)
         if self.mutate_rate:
             brain.mutate(rate=self.mutate_rate)
         return brain
@@ -281,12 +292,11 @@ if __name__ == "__main__":
     b1 = BasicBrain.create(name="b1")
     b2 = BasicBrain.create(name="b2")
 
-    gen = CrossoverBrainGenerator([b1, b2], n_generate=1000)
-    gen = BasicBrainGenerator(b1, n_generate=1000)
+    gen = CrossoverBrainGenerator([b1, b2], n_generate=10)
 
     a = time.time()
     for i in gen:
-        #print (i)
+        print (i)
         pass
     print( time.time()-a)
 

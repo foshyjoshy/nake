@@ -110,7 +110,7 @@ class FoodGenerator():
     def __getstate__(self):
         return {
             self.BOARD : self.board.__getstate__(),
-            self.POSITION : self._initialPos.tolist(),
+            self.POSITION : np.copy(self._initialPos).tolist(),
             self.INDEX_GENERATOR : self._indexGenerator.__getstate__(),
         }
 

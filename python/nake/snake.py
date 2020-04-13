@@ -6,7 +6,6 @@ from enum import IntEnum
 from time import time
 
 
-
 class SnakeActions(IntEnum):
     """ Enum to store all available snake actions"""
     MOVE_UP = 0
@@ -22,7 +21,7 @@ class SnakeHistory():
     DEFAULT_LENGTH = 10
 
     MOVES_TO_ACTION = {
-        consts.Moves.UP : SnakeActions.MOVE_UP,
+        consts.Moves.UP: SnakeActions.MOVE_UP,
         consts.Moves.DOWN: SnakeActions.MOVE_DOWN,
         consts.Moves.LEFT: SnakeActions.MOVE_LEFT,
         consts.Moves.RIGHT: SnakeActions.MOVE_RIGHT,
@@ -34,12 +33,12 @@ class SnakeHistory():
 
     def __eq__(self, other):
         if not isinstance(other, self.__class__):
-            #raise Exception("{} is not instance {}".format(other, self.__class__))
+            # raise Exception("{} is not instance {}".format(other, self.__class__))
             return False
         elif not other.arr.shape == self.arr.shape:
             return False
         else:
-            return np.all(other.arr==self.arr)
+            return np.all(other.arr == self.arr)
 
     @classmethod
     def createEmpty(cls, length=None):
@@ -62,7 +61,7 @@ class SnakeHistory():
         if n is None: n = self._historyArr.shape[0]
         debug("Expanding history by {}".format(n))
         self._historyArr = np.hstack([self._historyArr,
-                np.zeros([n], dtype=self._historyArr.dtype)])
+                                      np.zeros([n], dtype=self._historyArr.dtype)])
 
     def add(self, value):
         """ add to history"""
@@ -84,7 +83,6 @@ class SnakeHistory():
         return map(SnakeActions, self._historyArr)
 
 
-
 class Snake():
     """ Snake class """
 
@@ -103,9 +101,8 @@ class Snake():
 
         self.updatePositionalView()
 
-
     def __str__(self):
-        return "Snake name:{} headPos:{} direction:{} length:{} remaining moves:{}"\
+        return "Snake name:{} headPos:{} direction:{} length:{} remaining moves:{}" \
             .format(self.name, self.headPosition, self.direction, self.length, self.movesRemaining)
 
     def __len__(self):
@@ -118,13 +115,13 @@ class Snake():
     def initializeAtPosition(cls, position, direction=consts.Moves.DOWN, length=4, history=False, **kwargs):
         """ Starts from (x,y) moving in direction with length"""
 
-        _positions = np.ones([max(length*2+1, 64), 2], dtype=consts.DTYPE_SNAKE)*-1
+        _positions = np.ones([max(length * 2 + 1, 64), 2], dtype=consts.DTYPE_SNAKE) * -1
         _positions[-length:] = position
 
         if direction == consts.Moves.UP:
-            _positions[-length:, 1]+=np.arange(length, dtype=consts.DTYPE_SNAKE)
+            _positions[-length:, 1] += np.arange(length, dtype=consts.DTYPE_SNAKE)
         elif direction == consts.Moves.DOWN:
-            _positions[-length:, 1]-=np.arange(length, dtype=consts.DTYPE_SNAKE)
+            _positions[-length:, 1] -= np.arange(length, dtype=consts.DTYPE_SNAKE)
         elif direction == consts.Moves.LEFT:
             _positions[-length:, 0] += np.arange(length, dtype=consts.DTYPE_SNAKE)
         elif direction == consts.Moves.RIGHT:
@@ -137,13 +134,16 @@ class Snake():
         else:
             history = None
 
-        return cls(_positions.shape[0]-length, length, direction, _positions, history=history, **kwargs)
+        return cls(_positions.shape[0] - length, length, direction, _positions, history=history, **kwargs)
 
+    # def duplicate(self):
+    #     """ Duplicates snake at current position"""
+    #     #TODO
 
     @property
     def headPosition(self):
         """ Returns the current head position """
-        return self.positions[0] #TODO Maybe faster to store head view in arr
+        return self.positions[0]  # TODO Maybe faster to store head view in arr
 
     @property
     def bodyPositions(self):
@@ -160,15 +160,14 @@ class Snake():
 
     def updatePositionalView(self):
         """ Updates the positional arr view"""
-        self.positions = self._positions[self.headIdx:self.headIdx+self.length]
-
+        self.positions = self._positions[self.headIdx:self.headIdx + self.length]
 
     def expand(self, n=None):
         """ Expands the position arr by n values"""
         if n is None: n = self._positions.shape[0]
         debug("Expanding position by {}".format(n))
         self._positions = np.vstack([self._positions,
-                np.zeros([n, 2], dtype=self._positions.dtype)])
+                                     np.zeros([n, 2], dtype=self._positions.dtype)])
         self.updatePositionalView()
 
     def hasHeadCollidedWithBody(self):
@@ -180,7 +179,7 @@ class Snake():
         self.length += 1
         if updateArrView:
             self.updatePositionalView()
-        self.movesRemaining+=increaseMovesBy
+        self.movesRemaining += increaseMovesBy
 
         if self.history is not None:
             self.history.addEat()
@@ -190,16 +189,16 @@ class Snake():
         if direction is None:
             direction = self.direction
 
-        if self.length*2 > self._positions.shape[0]:
+        if self.length * 2 > self._positions.shape[0]:
             self.expand()
 
         if self.headIdx == 0:
             # Resetting snake position
             self._positions[-self.length:] = self._positions[:self.length]
-            self.headIdx = self._positions.shape[0]-self.length
+            self.headIdx = self._positions.shape[0] - self.length
 
         self.headIdx -= 1
-        self._positions[self.headIdx] = self._positions[self.headIdx+1]+direction.arr
+        self._positions[self.headIdx] = self._positions[self.headIdx + 1] + direction.arr
         self.direction = direction
 
         # Adding move to history
@@ -210,11 +209,10 @@ class Snake():
         if feed:
             self.feed(updateArrView=False)
 
-
         # Update view to stay in sync
         self.updatePositionalView()
         # Update our remaining moves
-        self.movesRemaining-=1
+        self.movesRemaining -= 1
         return True
 
     def moveUp(self, **kwargs):
@@ -251,14 +249,10 @@ class Snake():
         assert (color_board >= min_value and color_board <= max_value)
 
         im = np.zeros([board.height, board.width], dtype=dtype)
-        im[:,:] = color_board
-        im[self.bodyPositions[:,1]+board.y, self.bodyPositions[:,0]+board.x] = color_body
-        im[self.headPosition[1]+board.y, self.headPosition[0]+board.x] = color_head
+        im[:, :] = color_board
+        im[self.bodyPositions[:, 1] + board.y, self.bodyPositions[:, 0] + board.x] = color_body
+        im[self.headPosition[1] + board.y, self.headPosition[0] + board.x] = color_head
         return im
-
-
-
-
 
 
 if __name__ == "__main__":
@@ -266,20 +260,22 @@ if __name__ == "__main__":
     import matplotlib.pyplot as plt
 
     import logging
+
     logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger(__name__)
 
     from board import Board
+
     board = Board.fromDims(10, 10)
 
-    snake = Snake.initializeAtPosition((0,4), direction=consts.Moves.UP, length=6, history=True)
+    snake = Snake.initializeAtPosition((0, 4), direction=consts.Moves.UP, length=6, history=True)
     a = time()
     for i in range(10):
         snake.moveLeft()
-    print (time()-a)
-    print (snake.history.arr)
+    print(time() - a)
+    print(snake.history.arr)
 
     for i in snake.history.toActions():
-        print (i)
+        print(i)
 
-    print ([SnakeActions.MOVE_UP.value])
+    print([SnakeActions.MOVE_UP.value])
