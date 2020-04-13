@@ -32,13 +32,64 @@ if __name__ == "__main__":
     #     brain.sequential_model.setWeights(weights)
     #     print ("brainPath", brainPath)
 
-
+    """
     brains = CrossoverBrainGenerator([brain, brain], n_generate=2)
 
     for brain in brains:
         snake = Snake.initializeAtPosition((5, 5), direction=consts.Moves.DOWN, name="loop")
         _food = food.duplicate()
         print (run.runSnake(snake, brain, _food, _food.board), snake.headPosition)
+    """
 
 
 
+
+    # All classes need to suport create_group from h5py
+    # Make awesome IO class warpper for h5py
+
+    # Save as we go. Keep ram low
+    # 50,000 brains ... hdf5 500mb # 251.31146955 time taken
+    # Time without saving ...64.91375851631
+    # With running  but not saving ... 91.07679128646 ... This is first gen tho
+    # Only store x number of the best brains. Store while running... maybe
+
+    """
+    h5f = h5py.File("mytestfile.hdf5", "w")
+    grp = h5f.create_group("brains")
+    brains = CrossoverBrainGenerator([brain, brain], n_generate=50000)
+    for b in brains:
+        braing = grp.create_group(b.name)
+        for name, arr in b.getArrs().items():
+            braing.create_dataset(name, data=arr)
+    h5f.close()
+    print ("TIMETAKEN", time.time()-st)
+    """
+
+    with h5py.File("test.hdf5", "w") as FILE:
+        braing = FILE.create_group("ddddddd")
+        braing.attrs["ddddd"] = "dfdfdf"
+        braing.attrs["ddddsdsdsd"] = "sds"
+
+        c = braing["name"] = np.arange(12)
+
+        print (c)
+        aa = braing.create_dataset("EmptyDataset", dtype=np.float32)
+
+
+        print ("aaaa",aa.dtype)
+        aa.attrs["ssadasdas"] = "dcfdfd"
+
+        print (braing.keys())
+        print (braing.attrs.keys())
+        quit()
+
+
+
+
+
+    with h5py.File("mytestfile.hdf5", "r") as FILE:
+        brains = FILE["brains"]
+        b = brains["brain_000049997"]
+        print (b.keys())
+        print (b["brain_000049997_hidden_00_biases"].dtype)
+        print (b)
