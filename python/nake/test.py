@@ -2,6 +2,7 @@ from brain import Brains, BasicBrain, CrossoverBrainGenerator
 from snake import Snake
 from board import Board
 from food import FoodGenerator
+from layers import Layer
 
 import consts
 import time
@@ -65,19 +66,17 @@ if __name__ == "__main__":
     print ("TIMETAKEN", time.time()-st)
     """
 
+    layer = Layer("dense", "input_layer", 10, 20)
+
+
     with h5py.File("test.hdf5", "w") as FILE:
         braing = FILE.create_group("ddddddd")
         braing.attrs["ddddd"] = "dfdfdf"
         braing.attrs["ddddsdsdsd"] = "sds"
 
-        c = braing["name"] = np.arange(12)
-
-        print (c)
-        aa = braing.create_dataset("EmptyDataset", dtype=np.float32)
+        layer.add2h5py(braing)
 
 
-        print ("aaaa",aa.dtype)
-        aa.attrs["ssadasdas"] = "dcfdfd"
 
         print (braing.keys())
         print (braing.attrs.keys())
@@ -85,11 +84,3 @@ if __name__ == "__main__":
 
 
 
-
-
-    with h5py.File("mytestfile.hdf5", "r") as FILE:
-        brains = FILE["brains"]
-        b = brains["brain_000049997"]
-        print (b.keys())
-        print (b["brain_000049997_hidden_00_biases"].dtype)
-        print (b)

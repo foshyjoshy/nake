@@ -12,9 +12,12 @@ class ActivationBase(RegistryItemBase):
     """ Base class for Activations """
     REGISTRY = Activation
 
+    GROUP_NAME = "activation"
+
     @abstractmethod
     def compute(self, x, out=None):
         pass
+
 
 
 class Tanh(ActivationBase):
@@ -32,31 +35,29 @@ class Relu(ActivationBase):
 
 
 
+
+
+
+
+
 if __name__ == "__main__":
 
-    class TestClass(ActivationBase):
-        """ Test class """
 
-        def __init__(self, a, b=None):
-            self.a = a
-            self.b = b
+    import h5py
 
-        def compute(self, x, out=None):
-            return ("test", self.a, self.b)
-
-        def __getstate__(self):
-            return {**super().__getstate__(), "a": self.a}
-
-
-    print ("Available activations {}".format(Activation.registeredNames()))
+    # Create activation
     act = Activation.getInitialized("tanh")
-    print ("Tanh of 1", act.compute(1))
-    act = Activation.getInitialized("testclass", a="test")
-    act.compute(act)
-    print (act.__getstate__())
-    act = Activation(**act.__getstate__())
-    act.compute("s")
+    act2 = Activation.getInitialized("relu")
 
+    path = r"C:\tmp\activation_test.hdf5"
+
+    with h5py.File(path, "w") as FILE:
+        act.setDataOnGroup(FILE.create_group("activation"))
+        act2.setDataOnGroup(FILE.create_group("activation2"))
+
+    with h5py.File(path, "r") as FILE:
+        print (Activation(FILE.get("activation")))
+        print(Activation(FILE.get("activation2")))
 
 
 

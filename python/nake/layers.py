@@ -1,14 +1,19 @@
 import numpy as np
 from abc import abstractmethod
 from registry import Registry, RegistryItemBase
-from activations import Activation, Tanh
+from activations import Activation, Tanh, ActivationBase
 from logging import debug
 import math
-
+import json
+import h5py
 
 
 class SequentialModel():
     """ A list of layers that is computed sequential """
+
+    LAYER_ORDER = "layer_order"
+    LAYER_NAMES = "LAYER_{:04d}"
+
 
     def __init__(self, layers):
         for idx, layer in enumerate(layers):
@@ -53,37 +58,18 @@ class SequentialModel():
         """ Returns """
         return len(self.layers)
 
-    def generateRandomInputs(self, minval=0, maxval=20):
+
+    def generateRandomInputs(self, *args, **kwargs):
         """ Generate random inputs values for testing"""
-        return np.random.randint(minval, maxval, [self.n_inputs, 1])
+        return self.layers[0].generateRandomInputs(*args, **kwargs)
 
     def compute(self, inputs=None):
         """ Runs the input values through the network"""
         if inputs is None: inputs = self.input_arr
         for layer in self.layers:
             inputs = layer.compute(inputs)
-        return np.argmax(inputs)
+        return np.argmax(inputs)   #TODO add to class as config
 
-    def getStateList(self):
-        """ Return a list of layer get state"""
-        return [layer.__getstate__() for layer in self]
-
-    def getWeights(self, return_copy=False):
-        """ Returns the array state of all layers"""
-        arrWeights= {}
-        for layer in self:
-            for key, value in layer.getWeights().items():
-                if return_copy:
-                    value = value.copy()
-                arrWeights["{}_{}".format(layer.layer_name, key)] = value
-        return arrWeights
-
-    def setWeights(self, arrDict):
-        """ Sets arrays on layers """
-        for name, arr in arrDict.items():
-            debug("Setting arr {} with shape {}".format(name , arr.shape))
-            name, arr_name = name.rsplit("_", 1)
-            self.layerByName(name).setArr(arr_name, arr)
 
     def isCrossCompatible(self, other):
         """ Checks if the other model is cross compatible """
@@ -117,12 +103,42 @@ class SequentialModel():
             results.append(layer.crossover(*[other[idx] for other in others]))
         return results
 
+    def setDataOnGroup(self, grp):
+        """ Sets classes data the h5py grp"""
+        assert isinstance(grp, h5py.Group)
+        for lidx, layer in enumerate(self):
+            layer_grp = grp.create_group(self.LAYER_NAMES.format(lidx))
+            layer.setDataOnGroup(layer_grp)
+
+    @classmethod
+    def fromGroup(cls, grp):
+        """ Initialized via h5py group"""
+        layers = []
+        for lidx in range(len(grp)):
+            layer_name = cls.LAYER_NAMES.format(lidx)
+            layer = Layer(grp.get(layer_name))
+            if layer is None:
+                break
+            else:
+                layers.append(layer)
+        return cls(layers)
+
+
+
+
+
+
+
+
 
 
 
 class Layer(Registry):
     """ A class to store all layers"""
     registry = {}
+
+
+
 
 
 class LayerBase(RegistryItemBase):
@@ -134,6 +150,7 @@ class LayerBase(RegistryItemBase):
     LAYER_NAME = "layer_name"
     ACTIVATION = "activation"
     USE_BIAS = "use_bias"
+    STATE = "state"
 
     BIASES = "biases"
     WEIGHTS = "weights"
@@ -155,10 +172,11 @@ class LayerBase(RegistryItemBase):
 
 
 
+
 class Dense(LayerBase):
     """ Dense layer """
 
-    def __init__(self, layer_name, n_inputs, n_outputs, activation=None, use_bias=True):
+    def __init__(self, layer_name, n_inputs, n_outputs, activation=None, use_bias=True, weights=None, biases=None):
         self.layer_name = layer_name
         self.n_inputs = n_inputs
         self.n_outputs = n_outputs
@@ -176,10 +194,23 @@ class Dense(LayerBase):
 
         self.activation = activation
 
-        # Between -1 and 1
-        self.weights = (np.random.random([n_outputs, n_inputs]) * 2 - 1)
-        # Between -1 and 1
-        self.biases = (np.random.random([n_outputs, 1]) * 2 - 1) * 0.001
+
+        if weights is None:
+            # Between -1 and 1
+            self.weights = (np.random.random((n_outputs, n_inputs)) * 2 - 1)
+
+        else:
+            assert isinstance(weights, np.ndarray)
+            assert weights.shape == (n_outputs, n_inputs)
+            self.weights = weights
+
+        if biases is None:
+            # Between -1 and 1
+            self.biases = (np.random.random((n_outputs, 1)) * 2 - 1) * 0.001
+        else:
+            assert isinstance(biases, np.ndarray)
+            assert biases.shape == (n_outputs, 1)
+            self.biases = biases
 
         # Mutation mask ... create only once.
         self.mutation_mask = np.zeros_like(self.weights)
@@ -188,6 +219,10 @@ class Dense(LayerBase):
     def __str__(self):
         return "{}({}x{},use_bias={})".format(
             self.__class__.__name__, self.n_inputs, self.n_outputs, self.use_bias)
+
+    def generateRandomInputs(self, minval=0, maxval=20):
+        """ Generate random inputs values for testing"""
+        return np.random.randint(minval, maxval, [self.n_inputs, 1])
 
     def setWeights(self, weights):
         """ Setting weights on layer (n_outputs x n_inputs) """
@@ -207,32 +242,6 @@ class Dense(LayerBase):
         outputs = self.activation.compute(values)
         return outputs
 
-    def __getstate__(self):
-        """ Returns the state of the layer"""
-        state = {
-            self.N_INPUTS :  self.n_inputs,
-            self.N_OUTPUTS  : self.n_outputs,
-            self.LAYER_NAME : self.layer_name,
-            self.ACTIVATION : self.activation.__getstate__(),
-            self.USE_BIAS : self.use_bias,
-         }
-        return {**super().__getstate__(), **state}
-
-    def getWeights(self):
-        """ Returns the array state of the layer"""
-        return {
-            self.WEIGHTS : self.weights,
-            self.BIASES : self.biases,
-        }
-
-    def setArr(self, name, arr):
-        """ Sets an arr"""
-        if name == self.BIASES:
-            self.setBiases(arr)
-        elif name == self.WEIGHTS:
-            self.setWeights(arr)
-        else:
-            raise Exception("{} is not a valid array name".format(name))
 
     def mutate(self, percent=2, setvalues=True):
         """ Mutates a percentage of the non-locked weights """
@@ -251,6 +260,7 @@ class Dense(LayerBase):
             self.weights[indexes] = random_values
         else:
             self.weights[indexes] = np.clip(self.weights[indexes] + (random_values*0.1), -1, 1)
+
 
     def isCrossCompatible(self, other):
         """ Checks if other layer is cross compatible"""
@@ -286,22 +296,85 @@ class Dense(LayerBase):
 
 
 
+    def setDataOnGroup(self, grp, set_arrays=True):
+        """ Sets classes data the h5py grp"""
+        super().setDataOnGroup(grp)
+
+        # Dumping state to json string for writing
+        state = {
+            self.N_INPUTS: self.n_inputs,
+            self.N_OUTPUTS: self.n_outputs,
+            self.LAYER_NAME: self.layer_name,
+            self.USE_BIAS: self.use_bias,
+        }
+        grp.attrs[self.STATE] = json.dumps(state)
+
+        if set_arrays:
+            # Creating datasets for numpy arrays
+            grp.create_dataset(self.WEIGHTS, data=self.weights)
+            grp.create_dataset(self.BIASES, data=self.biases)
+
+        # Adding activation to grp
+        self.activation.setDataOnGroup(grp.create_group(ActivationBase.GROUP_NAME))
+
+    @classmethod
+    def fromGroup(cls, grp):
+        """ Initialized via h5py group"""
+
+        weights = grp.get(cls.WEIGHTS)
+        if weights is not None:
+            weights = weights[:]
+
+        biases = grp.get(cls.BIASES)
+        if biases is not None:
+            biases = biases[:]
+
+        activation = Activation(grp.get(ActivationBase.GROUP_NAME))
+
+        state = json.loads(grp.attrs[cls.STATE])
+
+        return cls(
+            state[cls.LAYER_NAME], state[cls.N_INPUTS], state[cls.N_OUTPUTS],
+            use_bias=state.get(cls.USE_BIAS),
+            weights=weights,
+            biases=biases,
+            activation=activation,
+        )
+
+
+
 
 if __name__ == "__main__":
 
-    layer = Layer("dense", "input_layer", 10, 20)
-    layer2 = Layer("dense", "output_layer", 20, 4)
 
-    # Creating two layer model
-    model = SequentialModel([layer, layer2])
 
-    # Duplicating model
-    model2 = SequentialModel(model.getStateList())
-    # Setting model ones weights
-    model2.setWeights(model.getWeights())
+    # path = r"C:\tmp\layer_test.hdf5"
+    # with h5py.File(path, "w") as FILE:
+    #     layer = Layer("dense", "input_layer", 21, 4, activation = Activation.getInitialized("relu"))
+    #     layer.setDataOnGroup(FILE.create_group("input_layer"))
+    #
+    # with h5py.File(path, "r") as FILE:
+    #     layer2 = Layer(FILE.get("input_layer"))
+    #
+    # inputs = layer.generateRandomInputs(-2,21)
+    # assert np.all(layer.compute(inputs.copy()) == layer2.compute(inputs.copy()))
+    #
 
-    # Checking if both outs generate the same value
-    print (model2.compute(model.input_arr))
-    model.mutate(25)
-    print (model.compute())
+    path = r"C:\tmp\sequence_test.hdf5"
+    with h5py.File(path, "w") as FILE:
+        layer = Layer("dense", "input_layer", 14, 16, activation = Activation.getInitialized("relu"))
+        layer2 = Layer("dense", "input_layer", 16, 16, activation=Activation.getInitialized("relu"))
+        layer3 = Layer("dense", "input_layer", 16, 16, activation=Activation.getInitialized("relu"))
+        layer4 = Layer("dense", "output_layer", 16, 4, activation=Activation.getInitialized("relu"))
+
+        for i in range(10000):
+            model = SequentialModel([layer, layer2, layer3, layer4])
+            model.setDataOnGroup(FILE.create_group("model_{}".format(i)))
+    #
+    # with h5py.File(path, "r") as FILE:
+    #     model2 = SequentialModel.fromGroup(FILE.get("model"))
+    #
+    # inputs = model.generateRandomInputs(-2,21)
+    # print (model.compute(inputs))
+    # print (model2.compute(inputs))
 
