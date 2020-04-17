@@ -2,18 +2,15 @@ import numpy as np
 from abc import abstractmethod
 from registry import Registry, RegistryItemBase
 from activations import Activation, Tanh, ActivationBase
-from logging import debug
 import math
-import json
-import h5py
+
 
 
 class SequentialModel():
     """ A list of layers that is computed sequential """
 
-    LAYER_ORDER = "layer_order"
-    LAYER_NAMES = "LAYER_{:04d}"
-
+    LAYERS = 'layers'
+    PREFIX = "sequential_model"
 
     def __init__(self, layers):
         for idx, layer in enumerate(layers):
@@ -21,10 +18,17 @@ class SequentialModel():
             if isinstance(layer, dict):
                 layers[idx] = Layer(**layer)
 
-        #TODO check if layers work!!!
-
         self.layers = layers
         self.input_arr = self.generateRandomInputs()
+
+    @classmethod
+    def fromState(cls, state, arrs=None):
+        """ Initialize class from state """
+        layers = state[cls.LAYERS]
+        obj = cls([Layer(**layer) for layer in layers])
+        if arrs is not None:
+            obj.setArrs(arrs)
+        return obj
 
     def __str__(self):
         return "SequentialModel({}x{}x{})".format(
@@ -37,10 +41,13 @@ class SequentialModel():
     def __getitem__ (self, index):
         return self.layers[index]
 
+    def __getstate__(self):
+        return {self.LAYERS : [layer.__getstate__() for layer in self]}
+
     def layerByName(self, name):
         """ returns the layer for the given name"""
         for layer in self:
-            if name == layer.layer_name:
+            if name == layer.name:
                 return layer
 
     @property
@@ -58,6 +65,16 @@ class SequentialModel():
         """ Returns """
         return len(self.layers)
 
+    def duplicate(self, duplicate_arrs=True):
+        """ Duplicates class"""
+        if duplicate_arrs:
+            arrs = self.getArrs(copy=True)
+        else:
+            arrs = None
+        return self.__class__.fromState(
+            self.__getstate__(),
+            arrs=arrs,
+        )
 
     def generateRandomInputs(self, *args, **kwargs):
         """ Generate random inputs values for testing"""
@@ -103,32 +120,23 @@ class SequentialModel():
             results.append(layer.crossover(*[other[idx] for other in others]))
         return results
 
-    def setDataOnGroup(self, grp):
-        """ Sets classes data the h5py grp"""
-        assert isinstance(grp, h5py.Group)
-        for lidx, layer in enumerate(self):
-            layer_grp = grp.create_group(self.LAYER_NAMES.format(lidx))
-            layer.setDataOnGroup(layer_grp)
+    def getArrs(self, copy=False):
+        """ return a dict of arrays used in model"""
+        arrs = {}
+        for layer in self:
+            for key, arr in layer.getArrs().items():
+                if copy:
+                    arr = arr.copy()
+                arrs["{}-{}-{}".format(self.PREFIX, layer.name, key)] = arr
+        return arrs
 
-    @classmethod
-    def fromGroup(cls, grp):
-        """ Initialized via h5py group"""
-        layers = []
-        for lidx in range(len(grp)):
-            layer_name = cls.LAYER_NAMES.format(lidx)
-            layer = Layer(grp.get(layer_name))
-            if layer is None:
-                break
-            else:
-                layers.append(layer)
-        return cls(layers)
-
-
-
-
-
-
-
+    def setArrs(self, arrs):
+        """" Sets a dict of arrays on layes"""
+        for key, arr in arrs.items():
+            layer_name, arr_name = key.split("-", 1)
+            if layer_name == self.PREFIX:
+                layer_name, arr_name = arr_name.split("-", 1)
+            self.layerByName(layer_name).setArr(arr_name, arr)
 
 
 
@@ -147,13 +155,18 @@ class LayerBase(RegistryItemBase):
 
     N_INPUTS = "n_inputs"
     N_OUTPUTS = "n_outputs"
-    LAYER_NAME = "layer_name"
+    NAME = "name"
     ACTIVATION = "activation"
     USE_BIAS = "use_bias"
     STATE = "state"
 
     BIASES = "biases"
     WEIGHTS = "weights"
+
+
+    def __init__(self, name):
+        self.name = name
+
 
     @abstractmethod
     def mutate(self, percent=5):
@@ -168,6 +181,20 @@ class LayerBase(RegistryItemBase):
     def crossover(self, *others):
         """ Crossing n number of layers """
 
+    @abstractmethod
+    def getArrs(self):
+        """ Returns this classes numpy arrays """
+
+    @abstractmethod
+    def setArr(self, arr_name, arr):
+        """ Sets arr via name """
+
+
+    def __getstate__(self):
+        return {
+            **super().__getstate__(),
+            self.NAME: self.name,
+        }
 
 
 
@@ -176,8 +203,9 @@ class LayerBase(RegistryItemBase):
 class Dense(LayerBase):
     """ Dense layer """
 
-    def __init__(self, layer_name, n_inputs, n_outputs, activation=None, use_bias=True, weights=None, biases=None):
-        self.layer_name = layer_name
+    def __init__(self, name, n_inputs, n_outputs, activation=None, use_bias=True, weights=None, biases=None):
+        super().__init__(name)
+
         self.n_inputs = n_inputs
         self.n_outputs = n_outputs
         self.use_bias = use_bias
@@ -198,7 +226,6 @@ class Dense(LayerBase):
         if weights is None:
             # Between -1 and 1
             self.weights = (np.random.random((n_outputs, n_inputs)) * 2 - 1)
-
         else:
             assert isinstance(weights, np.ndarray)
             assert weights.shape == (n_outputs, n_inputs)
@@ -295,51 +322,35 @@ class Dense(LayerBase):
         return (weight_mask, biases_mask, bias_index)
 
 
-
-    def setDataOnGroup(self, grp, set_arrays=True):
-        """ Sets classes data the h5py grp"""
-        super().setDataOnGroup(grp)
-
-        # Dumping state to json string for writing
-        state = {
+    def __getstate__(self):
+        return {
+            **super().__getstate__(),
+            self.ACTIVATION: self.activation.__getstate__(),
             self.N_INPUTS: self.n_inputs,
             self.N_OUTPUTS: self.n_outputs,
-            self.LAYER_NAME: self.layer_name,
+            self.NAME: self.name,
             self.USE_BIAS: self.use_bias,
         }
-        grp.attrs[self.STATE] = json.dumps(state)
 
-        if set_arrays:
-            # Creating datasets for numpy arrays
-            grp.create_dataset(self.WEIGHTS, data=self.weights)
-            grp.create_dataset(self.BIASES, data=self.biases)
+    def getArrs(self):
+        """ Returns this classes numpy arrays """
+        return {
+            self.WEIGHTS: self.weights,
+            self.BIASES: self.biases,
+        }
 
-        # Adding activation to grp
-        self.activation.setDataOnGroup(grp.create_group(ActivationBase.GROUP_NAME))
+    def setArr(self, arr_name, arr):
+        """ Sets arr via name """
+        if arr_name == self.WEIGHTS:
+            self.setWeights(arr)
+        elif arr_name == self.BIASES:
+            self.setBiases(arr)
+        else:
+            raise Exception()
 
-    @classmethod
-    def fromGroup(cls, grp):
-        """ Initialized via h5py group"""
 
-        weights = grp.get(cls.WEIGHTS)
-        if weights is not None:
-            weights = weights[:]
 
-        biases = grp.get(cls.BIASES)
-        if biases is not None:
-            biases = biases[:]
 
-        activation = Activation(grp.get(ActivationBase.GROUP_NAME))
-
-        state = json.loads(grp.attrs[cls.STATE])
-
-        return cls(
-            state[cls.LAYER_NAME], state[cls.N_INPUTS], state[cls.N_OUTPUTS],
-            use_bias=state.get(cls.USE_BIAS),
-            weights=weights,
-            biases=biases,
-            activation=activation,
-        )
 
 
 
@@ -348,33 +359,39 @@ if __name__ == "__main__":
 
 
 
-    # path = r"C:\tmp\layer_test.hdf5"
-    # with h5py.File(path, "w") as FILE:
-    #     layer = Layer("dense", "input_layer", 21, 4, activation = Activation.getInitialized("relu"))
-    #     layer.setDataOnGroup(FILE.create_group("input_layer"))
-    #
-    # with h5py.File(path, "r") as FILE:
-    #     layer2 = Layer(FILE.get("input_layer"))
-    #
-    # inputs = layer.generateRandomInputs(-2,21)
-    # assert np.all(layer.compute(inputs.copy()) == layer2.compute(inputs.copy()))
-    #
+    layer = Layer("dense", "input_lay2er", 14, 16, use_bias=False, activation=Activation.getInitialized("relu"))
+    layer2 = Layer("dense", "input_lay22er", 16, 16, activation=Activation.getInitialized("relu"))
+    layer3 = Layer("dense", "input_lay222er", 16, 16, activation=Activation.getInitialized("relu"))
+    layer4 = Layer("dense", "output_layer", 16, 4, activation=Activation.getInitialized("relu"))
 
-    path = r"C:\tmp\sequence_test.hdf5"
-    with h5py.File(path, "w") as FILE:
-        layer = Layer("dense", "input_layer", 14, 16, activation = Activation.getInitialized("relu"))
-        layer2 = Layer("dense", "input_layer", 16, 16, activation=Activation.getInitialized("relu"))
-        layer3 = Layer("dense", "input_layer", 16, 16, activation=Activation.getInitialized("relu"))
-        layer4 = Layer("dense", "output_layer", 16, 4, activation=Activation.getInitialized("relu"))
+    model = SequentialModel([layer, layer2, layer3, layer4])
+    inputs = model.generateRandomInputs(-1, 1)
 
-        for i in range(10000):
-            model = SequentialModel([layer, layer2, layer3, layer4])
-            model.setDataOnGroup(FILE.create_group("model_{}".format(i)))
+    np.savez_compressed(r"C:\tmp\sequence_test.npz", state=model.__getstate__(), **model.getArrs())
+
+
+    #model2 = model.duplicate(True)
+    #model3 = model.duplicate(True)
+    #print (model.compute(inputs), model2.compute(inputs), model3.compute(inputs))
+
+
+
     #
-    # with h5py.File(path, "r") as FILE:
-    #     model2 = SequentialModel.fromGroup(FILE.get("model"))
     #
-    # inputs = model.generateRandomInputs(-2,21)
-    # print (model.compute(inputs))
-    # print (model2.compute(inputs))
+    # npz = np.load(r"C:\tmp\sequence_test.npz", allow_pickle=True)
+    #
+    # arr = dict([(key, value) for key, value in npz.items() if not key == "state"])
+    #
+    # state = npz["state"].item()
+    #
+    # model2 = SequentialModel.fromState(state,)
+    #
+    #
+    # print (model.compute(inputs), model2.compute(inputs))
+    #
+    import os
+    print (os.path.getsize(r"C:\tmp\sequence_test.npz")*1e-6, "mb")
+
+
+
 

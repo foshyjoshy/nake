@@ -18,6 +18,7 @@ import h5py
 if __name__ == "__main__":
 
 
+
     savedir = r"C:\Users\colyt\OneDrive\Documents\snake"
     board = Board.fromDims(10, 10)
     food = FoodGenerator(board, (1,1), 2321)

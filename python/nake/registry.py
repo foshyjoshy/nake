@@ -1,7 +1,5 @@
 from logging import debug
-import consts
-from abc import ABC,abstractmethod
-import h5py
+from abc import ABC
 
 class Registry():
     """ A class to register classes """
@@ -13,8 +11,6 @@ class Registry():
     def __new__(cls, class_name, *args, **kwargs):
         if class_name is None:
             return
-        elif isinstance(class_name, h5py.Group):
-            return cls.initializeFromH5pyGroup(class_name, *args, **kwargs)
         else:
             return cls.getInitialized(class_name, *args, **kwargs)
 
@@ -69,16 +65,6 @@ class Registry():
                 with name \"{}\". Available {}".format(class_name, cls.registry))
 
     @classmethod
-    def initializeFromH5pyGroup(cls, group, *args, **kwargs):
-        """ Returns initialized class from h5py group"""
-        assert isinstance(group, h5py.Group)
-        class_name = group.attrs[cls.CLASS_NAME] # Let it raise exception if doesn't exist
-        if not cls.isNameRegistered(class_name):
-            raise Exception("Nothing has been registered \
-                with name \"{}\". Available {}".format(class_name, cls.registry))
-        return cls.get(class_name).fromGroup(group, *args, **kwargs)
-
-    @classmethod
     def registeredNames(self):
         """ Returns the registry keys"""
         return list(self.registry.keys())
@@ -105,16 +91,6 @@ class RegistryItemBase(ABC):
         else:
             super().__init_subclass__(**kwargs)
             cls._REGISTRY.register(cls)
-
-    @classmethod
-    def fromGroup(cls, grp, *args, **kwargs):
-        """ Initialized via h5py group"""
-        return cls()
-
-    def setDataOnGroup(self, grp):
-        """ Sets classes data the h5py grp"""
-        assert isinstance(grp, h5py.Group)
-        grp.attrs[Registry.CLASS_NAME] = self.getClassName()
 
     @classmethod
     def getClassName(cls):
