@@ -311,6 +311,9 @@ if __name__ == "__main__":
     from board import Board
     from food import FoodGenerator
     import consts
+    import os
+
+    import time
 
     board = Board.fromDims(10, 10)
     food = FoodGenerator(board, (1, 1), 2321)
@@ -319,29 +322,86 @@ if __name__ == "__main__":
 
     path = r"C:\tmp\brain_test.npz"
     brain1 = BasicBrain.create(name="brain1")
-    brain2 = brain1.duplicate(name="brain2")
+
+
+    s = time.time()
     brain1.save(path, compressed=True)
+    e = time.time()-s
+    print(os.path.getsize(path) * 1e-6, "mb", "time", e)
+
+    brain2 = brain1.duplicate(name="brain2")
     brain3 = Brains.load(path, name="brain3")
+    #
+    # print (brain1, brain1.computeMove(snake, board, food))
+    # print (brain2, brain2.computeMove(snake, board, food))
+    # print (brain3, brain3.computeMove(snake, board, food))
+    #
+    #
+    #
+    #
+    # gen = BasicBrainGenerator(brain1, n_generate=4)
+    # for brain in gen:
+    #     print (brain, brain.computeMove(snake, board, food))
+    #
+    # print ("\n")
+    #
+    # brain1.sequential_model[0].weights[:] = 0
+    # brain2.sequential_model[0].weights[:] = 1
+    # brain3.sequential_model[0].weights[:] = 2
+    # gen = CrossoverBrainGenerator([brain1, brain2, brain3], n_generate=4)
+    # for brain in gen:
+    #     print (brain.sequential_model[0].weights[:5,0])
+    #     print (brain, brain.computeMove(snake, board, food))
 
-    print (brain1, brain1.computeMove(snake, board, food))
-    print (brain2, brain2.computeMove(snake, board, food))
-    print (brain3, brain3.computeMove(snake, board, food))
+    import lzma
+    import bz2
+    from io import BytesIO,StringIO
+    import zipfile
 
-    import os
-    print (os.path.getsize(path)*1e-6, "mb")
+    path2 = r"C:\tmp\brain_test.xz"
+    s = time.time()
+    with lzma.open(path2, "w") as f:
+        gen = BasicBrainGenerator(brain1, n_generate=10)
+        for brain in gen:
+            brain.save(f)
 
-    gen = BasicBrainGenerator(brain1, n_generate=4)
-    for brain in gen:
-        print (brain, brain.computeMove(snake, board, food))
+    e = time.time()-s
+    print(os.path.getsize(path2) * 1e-6, "mb", "xz time", e)
 
-    print ("\n")
+    path3 = r"C:\tmp\brain_test.bz2"
+    s = time.time()
+    with bz2.open(path3, "wb", compresslevel=9) as f:
+        gen = BasicBrainGenerator(brain1, n_generate=10)
+        for brain in gen:
+            brain.save(f)
+    e = time.time() - s
+    print(os.path.getsize(path3) * 1e-6, "mb", "bz2 time", e)
 
-    brain1.sequential_model[0].weights[:] = 0
-    brain2.sequential_model[0].weights[:] = 1
-    brain3.sequential_model[0].weights[:] = 2
-    gen = CrossoverBrainGenerator([brain1, brain2, brain3], n_generate=4)
-    for brain in gen:
-        print (brain.sequential_model[0].weights[:5,0])
-        print (brain, brain.computeMove(snake, board, food))
+
+    path4 = r"C:\tmp\brain_test.zip"
+    s = time.time()
+    with zipfile.ZipFile(path4, 'w', zipfile.ZIP_LZMA) as myzip:
+        myzip.comment = b'1212sss12121'
+
+        gen = BasicBrainGenerator(brain1, n_generate=10)
+        for brain in gen:
+            F = BytesIO()
+            brain.save(F)
+            myzip.writestr("{}.npy".format(brain.name), F.getbuffer())
+
+    e = time.time() - s
+    print(os.path.getsize(path4) * 1e-6, "mb", "zip time", e)
+
+    with zipfile.ZipFile(path4, 'r') as myzip:
+        for name in myzip.namelist():
+            a = myzip.read(name)
+            b = Brains.load(BytesIO(a))
+            #print (b)
+        print (myzip.comment)
+
+
+
+
+
 
 
