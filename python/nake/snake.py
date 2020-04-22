@@ -18,6 +18,7 @@ class SnakeActions(IntEnum):
 class SnakeHistory():
     """ Simple way to store snake history and check snake movement history """
 
+    HISTORY = "history"
     DEFAULT_LENGTH = 10
 
     MOVES_TO_ACTION = {
@@ -39,6 +40,10 @@ class SnakeHistory():
             return False
         else:
             return np.all(other.arr == self.arr)
+
+    def getArrs(self):
+        """ Returns this classes numpy arrays """
+        return {self.HISTORY : self.arr}
 
     @classmethod
     def createEmpty(cls, length=None):
@@ -86,6 +91,13 @@ class SnakeHistory():
 class Snake():
     """ Snake class """
 
+    MOVES_REMAINING = "moves_remaining"
+    NAME = "name"
+    DIRECTION = "direction"
+    HISTORY = "history"
+    POSITIONS = "positions"
+
+
     def __init__(self, headIdx, length, direction,
                  positions, movesRemaining=200, name=None, history=None):
         if not positions.dtype == consts.DTYPE_SNAKE:
@@ -101,15 +113,13 @@ class Snake():
 
         self.updatePositionalView()
 
+
     def __str__(self):
         return "Snake name:{} headPos:{} direction:{} length:{} remaining moves:{}" \
             .format(self.name, self.headPosition, self.direction, self.length, self.movesRemaining)
 
     def __len__(self):
         return self.length
-
-    # def __array__(self):
-    #     return self.bodyPositions
 
     @classmethod
     def initializeAtPosition(cls, position, direction=consts.Moves.DOWN, length=4, history=False, **kwargs):
@@ -135,10 +145,6 @@ class Snake():
             history = None
 
         return cls(_positions.shape[0] - length, length, direction, _positions, history=history, **kwargs)
-
-    # def duplicate(self):
-    #     """ Duplicates snake at current position"""
-    #     #TODO
 
     @property
     def headPosition(self):
@@ -254,28 +260,29 @@ class Snake():
         im[self.headPosition[1] + board.y, self.headPosition[0] + board.x] = color_head
         return im
 
-
-if __name__ == "__main__":
-
-    import matplotlib.pyplot as plt
-
-    import logging
-
-    logging.basicConfig(level=logging.INFO)
-    logger = logging.getLogger(__name__)
-
-    from board import Board
-
-    board = Board.fromDims(10, 10)
-
-    snake = Snake.initializeAtPosition((0, 4), direction=consts.Moves.UP, length=6, history=True)
-    a = time()
-    for i in range(10):
-        snake.moveLeft()
-    print(time() - a)
-    print(snake.history.arr)
-
-    for i in snake.history.toActions():
-        print(i)
-
-    print([SnakeActions.MOVE_UP.value])
+    # def getArrs(self):
+    #     """ Returns this classes numpy arrays """
+    #     arrs = {self.POSITIONS: self.positions}
+    #     if self.history:
+    #         arrs.update(self.history.getArrs())
+    #     return arrs
+    #
+    # def __getstate__(self):
+    #     return {
+    #         self.MOVES_REMAINING: self.movesRemaining,
+    #         self.NAME: self.name,
+    #         self.DIRECTION: self.direction,
+    #     }
+    #
+    # def save(self, filepath, compressed=False):
+    #     """ Writes snake to npz """
+    #     arrs = self.getArrs()
+    #     if self.STATE in arrs.keys():
+    #         raise Exception("{} is an invalid key for self.getAttrs()".format(self.STATE))
+    #     else:
+    #         arrs[self.STATE] =  self.__getstate__()
+    #     return (np.savez_compressed if compressed else np.savez)(filepath,**arrs)
+    #
+    # # def duplicate(self, name=None, duplicate_arrs=True):
+    # #     """ Duplicates snake """
+    # #     ###TODO ADD SNAKE DUPLICATION

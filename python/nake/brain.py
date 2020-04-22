@@ -3,6 +3,7 @@ from abc import abstractmethod
 from layers import SequentialModel, Dense
 import copy
 import numpy as np
+import os
 
 
 
@@ -258,8 +259,10 @@ class BrainGeneratorBase(RegistryItemBase):
 class BasicBrainGenerator(BrainGeneratorBase):
     """ Duplicates input brain without weights"""
 
-    def __init__(self, brain, *args, **kwargs):
+    def __init__(self, brain=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        if brain is None:
+            brain = BasicBrain.create(name="generator_brain")
 
         if not Brains.isObjectRegistered(brain):
             raise Exception("{} is not a registered brain" \
@@ -298,6 +301,50 @@ class CrossoverBrainGenerator(BrainGeneratorBase):
 
 
 
+from io import BytesIO
+import threading
+import zipfile
+import queue
+
+class Writer():
+
+    def __init__(self, filepath):
+        self.F =  zipfile.ZipFile(filepath, 'w', zipfile.ZIP_DEFLATED)
+        self.q = queue.Queue(maxsize=10)
+        self.lock = threading.Lock()
+        self.t = threading.Thread(target=self.work)
+        self.t.start()
+
+        self.t2 = threading.Thread(target=self.work)
+        self.t2.start()
+
+
+    def work(self):
+
+        while True:
+            #print ("waiting")
+            item = self.q.get()
+            #print ("Found")
+            if item is None:
+                self.q.task_done()
+                break
+            self._writeBrain(item)
+            self.q.task_done()
+        #print ("sdsdsdssssss")
+
+
+    def writeBrain(self, brain):
+        #print (brain.name, "Adding brain in {}".format(threading.get_ident()))
+        self.q.put(brain)
+
+
+    def _writeBrain(self, brain):
+        #print(brain.name, "Writing brain in {}".format(threading.get_ident()))
+        F = BytesIO()
+        brain.save(F, compressed=False)
+        with self.lock:
+            self.F.writestr("{}.npy".format(brain.name), F.getbuffer())
+        #print (brain.name, "Writing done")
 
 
 
@@ -324,10 +371,10 @@ if __name__ == "__main__":
     brain1 = BasicBrain.create(name="brain1")
 
 
-    s = time.time()
-    brain1.save(path, compressed=True)
-    e = time.time()-s
-    print(os.path.getsize(path) * 1e-6, "mb", "time", e)
+    # s = time.time()
+    # brain1.save(path, compressed=True)
+    # e = time.time()-s
+    # print(os.path.getsize(path) * 1e-6, "mb", "time", e)
 
     brain2 = brain1.duplicate(name="brain2")
     brain3 = Brains.load(path, name="brain3")
@@ -357,47 +404,74 @@ if __name__ == "__main__":
     import bz2
     from io import BytesIO,StringIO
     import zipfile
+    #
+    # path2 = r"C:\tmp\brain_test.xz"
+    # s = time.time()
+    # with lzma.open(path2, "wb") as f:
+    #     gen = BasicBrainGenerator(brain1, n_generate=10)
+    #     for brain in gen:
+    #         brain.save(f)
+    #
+    # e = time.time()-s
+    # print(os.path.getsize(path2) * 1e-6, "mb", "xz time", e)
+    #
+    #
 
-    path2 = r"C:\tmp\brain_test.xz"
+    #
+    # path3 = r"C:\tmp\brain_test.bz2"
+    # s = time.time()
+    # with bz2.open(path3, "wb", compresslevel=9) as f:
+    #     gen = BasicBrainGenerator(brain1, n_generate=10)
+    #     for brain in gen:
+    #         brain.save(f)
+    # e = time.time() - s
+    # print(os.path.getsize(path3) * 1e-6, "mb", "bz2 time", e)
+
+
+    # path4 = r"C:\tmp\brain_test2.zip"
+    # s = time.time()
+    # with zipfile.ZipFile(path4, 'w', zipfile.ZIP_DEFLATED) as myzip:
+    #     myzip.comment = b'1212sss12121'
+    #     gen = BasicBrainGenerator(brain1, n_generate=10)
+    #
+    #     for brain in gen:
+    #         F = BytesIO()
+    #         brain.save(F, compressed=False)
+    #         myzip.writestr("{}.npy".format(brain.name), F.getbuffer())
+    #
+    # e = time.time() - s
+    # print(os.path.getsize(path4) * 1e-6, "mb", "zip time", e)
+
+    # with zipfile.ZipFile(path4, 'r') as myzip:
+    #     for name in myzip.namelist():
+    #         a = myzip.read(name)
+    #         b = Brains.load(BytesIO(a))
+    #         #print (b)
+    #     print (myzip.comment)
+
+
+    path5 = r"C:\tmp\brain_test3.zip"
+    a = Writer(path5)
     s = time.time()
-    with lzma.open(path2, "w") as f:
-        gen = BasicBrainGenerator(brain1, n_generate=10)
-        for brain in gen:
-            brain.save(f)
 
-    e = time.time()-s
-    print(os.path.getsize(path2) * 1e-6, "mb", "xz time", e)
 
-    path3 = r"C:\tmp\brain_test.bz2"
-    s = time.time()
-    with bz2.open(path3, "wb", compresslevel=9) as f:
-        gen = BasicBrainGenerator(brain1, n_generate=10)
-        for brain in gen:
-            brain.save(f)
+    gen = BasicBrainGenerator(brain1, n_generate=1000)
+    for brain in gen:
+        #time.sleep(0.1)
+        a.writeBrain(brain)
+    a.writeBrain(None)
+    a.writeBrain(None)
+    # print ("ss")
+    a.t.join()
+    a.t2.join()
     e = time.time() - s
-    print(os.path.getsize(path3) * 1e-6, "mb", "bz2 time", e)
+    print(os.path.getsize(path5) * 1e-6, "mb", "zip time", e)
 
 
-    path4 = r"C:\tmp\brain_test.zip"
-    s = time.time()
-    with zipfile.ZipFile(path4, 'w', zipfile.ZIP_LZMA) as myzip:
-        myzip.comment = b'1212sss12121'
 
-        gen = BasicBrainGenerator(brain1, n_generate=10)
-        for brain in gen:
-            F = BytesIO()
-            brain.save(F)
-            myzip.writestr("{}.npy".format(brain.name), F.getbuffer())
 
-    e = time.time() - s
-    print(os.path.getsize(path4) * 1e-6, "mb", "zip time", e)
+    quit()
 
-    with zipfile.ZipFile(path4, 'r') as myzip:
-        for name in myzip.namelist():
-            a = myzip.read(name)
-            b = Brains.load(BytesIO(a))
-            #print (b)
-        print (myzip.comment)
 
 
 

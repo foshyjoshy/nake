@@ -7,8 +7,11 @@ import numpy as np
 
 
 
-def runSnake(snake, brain, foodGenerator, board):
+def runSnake(snake, brain, foodGenerator, board=None):
     """ Runs snake until it terminates"""
+
+    if board is None:
+        board = foodGenerator.board
 
     # Checking inputs
     assert isinstance(snake, Snake)
