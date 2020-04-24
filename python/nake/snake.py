@@ -2,6 +2,7 @@ import numpy as np
 import consts
 from logging import debug
 import utils
+
 from enum import IntEnum
 from time import time
 
@@ -87,6 +88,14 @@ class SnakeHistory():
         """ Turns numpy arr into SnakeActions """
         return map(SnakeActions, self._historyArr)
 
+    def duplicate(self):
+        """ Returns a copy of the current class"""
+        return self.__class__(int(self.headIndex), self._historyArr.copy())
+
+
+
+
+
 
 class Snake():
     """ Snake class """
@@ -145,6 +154,24 @@ class Snake():
             history = None
 
         return cls(_positions.shape[0] - length, length, direction, _positions, history=history, **kwargs)
+
+
+    def duplicate(self, name=None, duplicate_history=True):
+        """ Duplicates snake """
+        if duplicate_history and self.history is not None:
+            history = self.history.duplicate()
+        else:
+            history = None
+
+        return self.__class__(
+            int(self.headIdx),
+            int(self.length),
+            self.direction,
+            self._positions.copy(),
+            movesRemaining=int(self.movesRemaining),
+            name=name or self.name,
+            history=history,
+        )
 
     @property
     def headPosition(self):
@@ -259,30 +286,30 @@ class Snake():
         im[self.bodyPositions[:, 1] + board.y, self.bodyPositions[:, 0] + board.x] = color_body
         im[self.headPosition[1] + board.y, self.headPosition[0] + board.x] = color_head
         return im
-
-    # def getArrs(self):
-    #     """ Returns this classes numpy arrays """
-    #     arrs = {self.POSITIONS: self.positions}
-    #     if self.history:
-    #         arrs.update(self.history.getArrs())
-    #     return arrs
-    #
-    # def __getstate__(self):
-    #     return {
-    #         self.MOVES_REMAINING: self.movesRemaining,
-    #         self.NAME: self.name,
-    #         self.DIRECTION: self.direction,
-    #     }
-    #
-    # def save(self, filepath, compressed=False):
-    #     """ Writes snake to npz """
-    #     arrs = self.getArrs()
-    #     if self.STATE in arrs.keys():
-    #         raise Exception("{} is an invalid key for self.getAttrs()".format(self.STATE))
-    #     else:
-    #         arrs[self.STATE] =  self.__getstate__()
-    #     return (np.savez_compressed if compressed else np.savez)(filepath,**arrs)
-    #
-    # # def duplicate(self, name=None, duplicate_arrs=True):
-    # #     """ Duplicates snake """
-    # #     ###TODO ADD SNAKE DUPLICATION
+#
+#
+#     def save(self, filepath, compressed=False):
+#         """ Writes snake to npz """
+#
+#         state = {
+#             self.MOVES_REMAINING: self.movesRemaining,
+#             self.NAME: self.name,
+#             self.DIRECTION: self.direction,
+#         }
+#         arrs = {self.POSITIONS : self.positions}
+#         if self.
+#
+#
+#
+#
+#
+#         arrs = self.getArrs()
+#         if self.STATE in arrs.keys():
+#             raise Exception("{} is an invalid key for self.getAttrs()".format(self.STATE))
+#         else:
+#             arrs[self.STATE] =  self.__getstate__()
+#         return (np.savez_compressed if compressed else np.savez)(filepath,**arrs)
+#
+#
+# self._positions = positions
+# self.history = history
