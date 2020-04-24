@@ -15,10 +15,9 @@ import h5py
 
 
 
-#TODO SAVE SNAKE HISTORY/SNAKE
-#TODO DUPLICATE SNAKE
+#TODO LOAD SNAKE
 
-#TODO Save history... for checking fitness
+#TODO Get food per movement from history
 #TODO Save term
 #TODO Get fitness from these above
 
@@ -37,10 +36,15 @@ if __name__ == "__main__":
         print (sn)
         fo = foodGenerator.duplicate(initialState=True)
         term = run.runSnake(sn,brain,fo)
+
+        path = r"C:\tmp\brain_snake.npz"
+        sn.save(path, compressed=True)
+
+
         print(term)
         print(sn)
         im = sn.generatePreviewImage(fo.board)
-        plt.imshow(im)
+        plt.imshow(im, vmax=255)
         plt.show()
 
         print (term)

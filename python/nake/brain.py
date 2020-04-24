@@ -371,11 +371,11 @@ if __name__ == "__main__":
     brain1 = BasicBrain.create(name="brain1")
 
 
-    # s = time.time()
-    # brain1.save(path, compressed=True)
-    # e = time.time()-s
-    # print(os.path.getsize(path) * 1e-6, "mb", "time", e)
-
+    s = time.time()
+    brain1.save(path, compressed=True)
+    e = time.time()-s
+    print(os.path.getsize(path) * 1e-6, "mb", "time", e)
+    quit()
     brain2 = brain1.duplicate(name="brain2")
     brain3 = Brains.load(path, name="brain3")
     #

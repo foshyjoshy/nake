@@ -105,7 +105,7 @@ class Snake():
     DIRECTION = "direction"
     HISTORY = "history"
     POSITIONS = "positions"
-
+    STATE = "state"
 
     def __init__(self, headIdx, length, direction,
                  positions, movesRemaining=200, name=None, history=None):
@@ -283,33 +283,32 @@ class Snake():
 
         im = np.zeros([board.height, board.width], dtype=dtype)
         im[:, :] = color_board
-        im[self.bodyPositions[:, 1] + board.y, self.bodyPositions[:, 0] + board.x] = color_body
-        im[self.headPosition[1] + board.y, self.headPosition[0] + board.x] = color_head
+
+        body_pos = self.bodyPositions + [board.x, board.y]
+        im[body_pos[:, 1], body_pos[:, 0]] = color_body
+
+        # Drawing head position if inside board
+        head_pos = [self.headPosition[0] + board.x, self.headPosition[1] + board.y]
+        if board.inside(head_pos):
+            im[head_pos[1], head_pos[0]] = color_head
         return im
-#
-#
-#     def save(self, filepath, compressed=False):
-#         """ Writes snake to npz """
-#
-#         state = {
-#             self.MOVES_REMAINING: self.movesRemaining,
-#             self.NAME: self.name,
-#             self.DIRECTION: self.direction,
-#         }
-#         arrs = {self.POSITIONS : self.positions}
-#         if self.
-#
-#
-#
-#
-#
-#         arrs = self.getArrs()
-#         if self.STATE in arrs.keys():
-#             raise Exception("{} is an invalid key for self.getAttrs()".format(self.STATE))
-#         else:
-#             arrs[self.STATE] =  self.__getstate__()
-#         return (np.savez_compressed if compressed else np.savez)(filepath,**arrs)
-#
-#
-# self._positions = positions
-# self.history = history
+
+
+    def save(self, filepath, compressed=False):
+        """ Writes snake to npz """
+        state = {
+            self.MOVES_REMAINING: self.movesRemaining,
+            self.NAME: self.name,
+            self.DIRECTION: self.direction,
+        }
+        arrs = {
+            self.POSITIONS : self.positions,
+            self.STATE : state
+        }
+        if self.history is not None:
+            arrs[self.HISTORY] = self.history.arr
+
+        return (np.savez_compressed if compressed else np.savez)(filepath,**arrs)
+
+    def load(self, path, name=None):
+        pass

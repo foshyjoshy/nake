@@ -47,7 +47,7 @@ class Board():
         return "Lefttop {} rightBottom {}".format(self.leftTop, self.rightBottom)
 
     def __contains__(self, item):
-        return self.pointInside(item)
+        return self.inside(item)
 
     @property
     def x(self):
@@ -78,9 +78,6 @@ class Board():
     def outside(self, point):
         """ Checks if the point is outside or inside the board"""
         return self.inside(point) == False
-
-
-
 
 
 if __name__ == "__main__":
