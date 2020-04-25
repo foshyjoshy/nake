@@ -2,10 +2,7 @@ import numpy as np
 import consts
 from logging import debug
 import utils
-
 from enum import IntEnum
-from time import time
-
 
 class SnakeActions(IntEnum):
     """ Enum to store all available snake actions"""
@@ -14,7 +11,6 @@ class SnakeActions(IntEnum):
     MOVE_LEFT = 2
     MOVE_RIGHT = 3
     EAT = 4
-
 
 class SnakeHistory():
     """ Simple way to store snake history and check snake movement history """
@@ -42,9 +38,14 @@ class SnakeHistory():
         else:
             return np.all(other.arr == self.arr)
 
+    @classmethod
+    def fromArrs(cls, historyArrr):
+        """ creates class from a single history array """
+        return cls(len(historyArrr), historyArrr)
+
     def getArrs(self):
         """ Returns this classes numpy arrays """
-        return {self.HISTORY : self.arr}
+        return {self.HISTORY: self.arr}
 
     @classmethod
     def createEmpty(cls, length=None):
@@ -61,6 +62,12 @@ class SnakeHistory():
     def size(self):
         """ Returns the size of the history stack"""
         return self._index
+
+    #TODO count numbr of actions in history.... given history returns coun
+
+    def movesPerFood(self):
+        """ returns the mean moves taken to find food"""
+        #TODO
 
     def expand(self, n=None):
         """ Expands historyArr arr by n values"""
@@ -90,11 +97,7 @@ class SnakeHistory():
 
     def duplicate(self):
         """ Returns a copy of the current class"""
-        return self.__class__(int(self.headIndex), self._historyArr.copy())
-
-
-
-
+        return self.__class__(int(self._index), self._historyArr.copy())
 
 
 class Snake():
@@ -107,8 +110,13 @@ class Snake():
     POSITIONS = "positions"
     STATE = "state"
 
+    DEFAULT_MOVES = 25
+
     def __init__(self, headIdx, length, direction,
-                 positions, movesRemaining=200, name=None, history=None):
+                 positions, movesRemaining=None, name=None, history=None):
+
+        if movesRemaining is None:
+            movesRemaining = int(self.DEFAULT_MOVES)
         if not positions.dtype == consts.DTYPE_SNAKE:
             TypeError('{} dtype arr expected'.format(consts.DTYPE_SNAKE))
 
@@ -122,13 +130,33 @@ class Snake():
 
         self.updatePositionalView()
 
-
     def __str__(self):
         return "Snake name:{} headPos:{} direction:{} length:{} remaining moves:{}" \
             .format(self.name, self.headPosition, self.direction, self.length, self.movesRemaining)
 
     def __len__(self):
         return self.length
+
+    def __eq__(self, other):
+
+        # Checking positions first
+        if not isinstance(other, self.__class__):
+            return False
+        elif not other.positions.shape == self.positions.shape:
+            return False
+        elif not np.all(other.positions == self.positions):
+            return False
+        # Direction
+        elif not self.direction == other.direction:
+            return False
+        # Moves remaining is the same
+        elif not self.movesRemaining == other.movesRemaining:
+            return False
+        # Checks if we have history and its the same
+        elif not self.history == other.history:
+            return False
+        else:
+            return True
 
     @classmethod
     def initializeAtPosition(cls, position, direction=consts.Moves.DOWN, length=4, history=False, **kwargs):
@@ -155,7 +183,6 @@ class Snake():
 
         return cls(_positions.shape[0] - length, length, direction, _positions, history=history, **kwargs)
 
-
     def duplicate(self, name=None, duplicate_history=True):
         """ Duplicates snake """
         if duplicate_history and self.history is not None:
@@ -172,6 +199,11 @@ class Snake():
             name=name or self.name,
             history=history,
         )
+
+    @property
+    def arr(self):
+        """ Makes call a little easier"""
+        return self.positions
 
     @property
     def headPosition(self):
@@ -207,7 +239,7 @@ class Snake():
         """Returns if the current head position has collided with its body"""
         return np.any(np.all(self.positions[0] == self.positions[1:], axis=1))
 
-    def feed(self, updateArrView=True, increaseMovesBy=100):
+    def feed(self, updateArrView=True, increaseMovesBy=25):
         """ Feeds snake a piece of fruit"""
         self.length += 1
         if updateArrView:
@@ -293,7 +325,6 @@ class Snake():
             im[head_pos[1], head_pos[0]] = color_head
         return im
 
-
     def save(self, filepath, compressed=False):
         """ Writes snake to npz """
         state = {
@@ -302,13 +333,35 @@ class Snake():
             self.DIRECTION: self.direction,
         }
         arrs = {
-            self.POSITIONS : self.positions,
-            self.STATE : state
+            self.POSITIONS: self.positions,
+            self.STATE: state
         }
         if self.history is not None:
             arrs[self.HISTORY] = self.history.arr
 
-        return (np.savez_compressed if compressed else np.savez)(filepath,**arrs)
+        return (np.savez_compressed if compressed else np.savez)(filepath, **arrs)
 
-    def load(self, path, name=None):
-        pass
+    @classmethod
+    def load(cls, filepath, name=None):
+        """ Loads snake from npz path """
+        npfile = np.load(filepath, allow_pickle=True)
+        arrs = dict(npfile.items())
+        state = arrs.pop(cls.STATE).item()
+        if name is not None:
+            state[cls.NAME] = name
+
+        history = arrs.get(cls.HISTORY)
+        if history is not None:
+            history = SnakeHistory.fromArrs(history)
+
+        positions = arrs[cls.POSITIONS]
+
+        return cls(
+            0,
+            len(positions),
+            state[cls.DIRECTION],
+            positions,
+            movesRemaining=state.get(cls.MOVES_REMAINING, int(cls.DEFAULT_MOVES)),
+            name=name,
+            history=history
+        )

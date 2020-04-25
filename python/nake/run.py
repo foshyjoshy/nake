@@ -7,7 +7,7 @@ import numpy as np
 
 
 
-def runSnake(snake, brain, foodGenerator, board=None):
+def runSnake(snake, brain, foodGenerator, board=None, callback_move=None, callback_finished=None):
     """ Runs snake until it terminates"""
 
     if board is None:
@@ -28,6 +28,9 @@ def runSnake(snake, brain, foodGenerator, board=None):
         move = Moves(brain.computeMove(snake, board, foodGenerator))
         # Moving snake
         snake.move(move)
+
+        if callback_move is not None:
+            callback_move(snake, board)
 
         if len(snake) > 1:
             # Checking if snake has moved back on itself
@@ -52,6 +55,9 @@ def runSnake(snake, brain, foodGenerator, board=None):
 
     else:
         term = Terminated.UNABLE_TO_MOVE
+
+    if callback_finished is not None:
+        callback_finished(snake, brain, foodGenerator, board)
 
     return term
 
