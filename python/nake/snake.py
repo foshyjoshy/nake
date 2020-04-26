@@ -12,6 +12,12 @@ class SnakeActions(IntEnum):
     MOVE_RIGHT = 3
     EAT = 4
 
+    @classmethod
+    def has_value(cls, value):
+        return value in cls._value2member_map_
+
+
+
 class SnakeHistory():
     """ Simple way to store snake history and check snake movement history """
 
@@ -63,11 +69,18 @@ class SnakeHistory():
         """ Returns the size of the history stack"""
         return self._index
 
-    #TODO count numbr of actions in history.... given history returns coun
+    def getIndexesForAction(self, action):
+        """ returns the indexes for given action """
+        if not SnakeActions.has_value(action):
+            raise Exception('"{}" is not a valid action'.format(action))
+        return np.where(self.arr == action)[0]
 
     def movesPerFood(self):
         """ returns the mean moves taken to find food"""
-        #TODO
+        indexes = self.getIndexesForAction(SnakeActions.EAT)
+        if not len(indexes):
+            return None
+        return (indexes[-1]-indexes.shape[0]+1)/indexes.shape[0]
 
     def expand(self, n=None):
         """ Expands historyArr arr by n values"""
