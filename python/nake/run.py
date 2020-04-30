@@ -4,12 +4,11 @@ from food import FoodGenerator
 from board import Board
 from consts import Moves, Terminated
 import numpy as np
-
+from snakeio import Writer
 
 
 def runSnake(snake, brain, foodGenerator, board=None, callback_move=None, callback_finished=None):
     """ Runs snake until it terminates"""
-
     if board is None:
         board = foodGenerator.board
 
@@ -62,11 +61,23 @@ def runSnake(snake, brain, foodGenerator, board=None, callback_move=None, callba
     return term
 
 
+def run_generator(brain_generator, input_snake, input_food_generator, output_path, close_file=True):
+    """ Run a brain generator """
 
+    # Creating writer to save output
+    writer = Writer(output_path)
+    # Writing input food generator
+    writer.write_food(input_food_generator, name="input_foodGenerator")
+    # Writing input snake
+    writer.write_snake(input_snake, name="input_snake")
 
+    for brain in brain_generator:
+        brain_name = writer.write_brain(brain)
+        snake = input_snake.duplicate()
+        food_generator = input_food_generator.duplicate(initialState=True)
+        term = runSnake(snake, brain, food_generator)
 
+    if close_file:
+        writer.close()
 
-
-
-
-
+    return writer.filename

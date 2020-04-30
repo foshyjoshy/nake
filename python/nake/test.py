@@ -2,21 +2,18 @@ from brain import Brains, BasicBrain, CrossoverBrainGenerator, BasicBrainGenerat
 from snake import Snake, SnakeActions
 from board import Board
 from food import FoodGenerator
-from layers import Layer
 
 import consts
 import time
-import numpy as np
 import matplotlib.pyplot as plt
 import run
 
 
-import h5py
+from snakeio import Reader
 
+#TODO WRITE GENERATORS
+#TODO WRITE PANDA  ...Save term
 
-
-#TODO Get food per movement from history
-#TODO Save term
 #TODO Get fitness from these above
 
 
@@ -24,6 +21,8 @@ def callback_move(snake, board):
     im = snake.generatePreviewImage(board)
     plt.imshow(im, vmax=255)
     plt.show()
+
+
 
 if __name__ == "__main__":
 
@@ -36,35 +35,19 @@ if __name__ == "__main__":
         length=4
     )
 
-    #path = r"C:\tmp\brain_snake.npz"
-    #snake2 = Snake.load(path)
+    filepath = r"C:\tmp\run.zip"
+    brain_generator = BasicBrainGenerator(n_generate=1000)
+    term = run.run_generator(brain_generator, snake, foodGenerator, filepath)
 
+    print ("Opening")
+    reader = Reader(filepath)
 
-    for brain in BasicBrainGenerator(n_generate=100000):
-        sn = snake.duplicate()
+    # for f in reader.zip.namelist():
+    #     zinfo = reader.zip.getinfo(f)
+    #     print (zinfo)
+    #     if(zinfo.is_dir()):
+    #         print(f)
 
-        fo = foodGenerator.duplicate(initialState=True)
-        term = run.runSnake(sn,brain,fo)
-        s =  (sn.history.movesPerFood())
-        if s is not None:
-            print (s)
-
-        path = r"C:\tmp\brain_snake.npz"
-        sn.save(path, compressed=True)
-        #if term == consts.Terminated.UNABLE_TO_MOVE:
-        # if sn.length == 5:
-        #     fo = foodGenerator.duplicate(initialState=True)
-        #     print (sn)
-        #     snake2 = sn.load(path)
-        #     print (sn==snake2)
-        #     print(snake2)
-        #     sn = snake.duplicate()
-        #     term = run.runSnake(sn, brain, fo, callback_move=callback_move)
-        #
-        #     print(term)
-        #     print(sn)
-        #     #im = sn.generatePreviewImage(fo.board)
-        #     #plt.imshow(im, vmax=255)
-        #     #plt.show()
-        #     quit()
-
+    print (reader.nr_brains,reader.brains_info)
+    print (reader.nr_foods,reader.foods_info)
+    print (reader.nr_snakes,reader.snake_info)

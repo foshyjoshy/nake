@@ -72,13 +72,14 @@ class FoodGenerator():
     POSITION = "position"
     INDEX_GENERATOR = "index_generator"
 
+    STATE = "state"
 
     def __init__(self, board, position, index_generator=None):
         if index_generator is None:
             index_generator = RandomIndexGenerator()
 
         if isinstance(board, dict):
-            board = Board(**board)
+            board = Board.fromState(board)
         if isinstance(index_generator, dict):
             index_generator = RandomIndexGenerator(**index_generator)
         elif not isinstance(index_generator, RandomIndexGenerator):
@@ -152,15 +153,15 @@ class FoodGenerator():
         self._pos.flags.writeable = False
         self._count += 1
 
-    def findNext(self, positions):
+    def findNext(self, positions=None):
         """ Finds the next available position """
-        if isinstance(positions, Snake):
-            positions = positions.positions
-
-        indexes = np.ravel_multi_index(positions.T[::-1], self.shape)
 
         self._arr[:] = True
-        self._arr[indexes] = False
+        if positions is not None:
+            if isinstance(positions, Snake):
+                positions = positions.positions
+            indexes = np.ravel_multi_index(positions.T[::-1], self.shape)
+            self._arr[indexes] = False
 
         #plt.imshow(self._arr.reshape(self.shape))
         #plt.show()
@@ -176,6 +177,20 @@ class FoodGenerator():
             self._status = False
 
         return self.pos
+
+
+    def save(self, filepath, compressed=False):
+        """ Writes food generator to npz """
+        arrs = {self.STATE : self.__getstate__()}
+        return (np.savez_compressed if compressed else np.savez)(filepath, **arrs)
+
+    @classmethod
+    def load(cls, filepath):
+        """ Loads food from npz path """
+        npfile = np.load(filepath, allow_pickle=True)
+        arrs = dict(npfile.items())
+        state = arrs.pop(cls.STATE).item()
+        return cls(**state)
 
 
 
