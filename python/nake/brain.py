@@ -294,7 +294,7 @@ class CrossoverBrainGenerator(BrainGeneratorBase):
 
     def generate(self, idx):
         """  generates and returns new brain"""
-        brain = crossover(self.generatename(idx), *self.brains)
+        brain = crossover(self.generate_name(idx), *self.brains)
         if self.mutate_rate:
             brain.mutate(rate=self.mutate_rate)
         return brain

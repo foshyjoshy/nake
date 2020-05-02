@@ -2,20 +2,19 @@ import utils
 import numpy as np
 
 
-class Board():
+class Board:
 
     LEFT_TOP = "left_top"
     RIGHT_BOTTOM = "right_bottom"
 
-    DEFAULT_LEFT_TOP = (0,0)
+    DEFAULT_LEFT_TOP = (0, 0)
 
-    def __init__(self, leftTop, rightBottom):
+    def __init__(self, left_top, right_bottom):
 
-        self.leftTop = np.array(leftTop, dtype=int)
-        self.rightBottom = np.array(rightBottom, dtype=int)
+        self.leftTop = np.array(left_top, dtype=int)
+        self.rightBottom = np.array(right_bottom, dtype=int)
         if not self.leftTop.shape == (2,) or not self.rightBottom.shape == (2,):
-           raise Exception("Incorrect input shapes. Shape of (2,) required")
-
+            raise Exception("Incorrect input shapes. Shape of (2,) required")
 
         self.width = self.rightBottom[0]-self.leftTop[0]
         self.height = self.rightBottom[1]-self.leftTop[1]
@@ -25,7 +24,7 @@ class Board():
     @classmethod
     def fromDims(cls, width, height, *args, **kwargs):
         """ Initialize class from width and height"""
-        return cls((0,0), (width, height), *args, **kwargs)
+        return cls((0, 0), (width, height), *args, **kwargs)
 
     @classmethod
     def fromState(cls, stateDict):
@@ -64,7 +63,6 @@ class Board():
     @property
     def y2(self):
         return self.rightBottom[1]
-
 
     def movesToBoardEdges(self, point, moves=None):
         """ Returns the points number of moves to the edge of the board """

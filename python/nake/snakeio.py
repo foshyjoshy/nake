@@ -142,6 +142,12 @@ class Reader:
             self._generate_info_lists()
         return self._snakes_info
 
+    def read_bytesIO(self, file_path):
+        """ Reads data into BytesIO"""
+        return BytesIO(self.zip.read(file_path))
 
+    def read_numpy(self, file_path, allow_pickle=True):
+        """ Reads numpy file from zip"""
+        return np.load(self.read_bytesIO(file_path), allow_pickle=allow_pickle)
 
 

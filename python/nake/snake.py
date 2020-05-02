@@ -82,6 +82,14 @@ class SnakeHistory():
             return None
         return (indexes[-1]-indexes.shape[0]+1)/indexes.shape[0]
 
+    def moves_made(self):
+        """ Returns the number of moves made"""
+        return np.sum(np.any([
+            self.arr == SnakeActions.MOVE_UP,
+            self.arr == SnakeActions.MOVE_DOWN,
+            self.arr == SnakeActions.MOVE_LEFT,
+            self.arr == SnakeActions.MOVE_RIGHT], axis=0))
+
     def expand(self, n=None):
         """ Expands historyArr arr by n values"""
         if n is None: n = self._historyArr.shape[0]
@@ -196,6 +204,10 @@ class Snake():
 
         return cls(_positions.shape[0] - length, length, direction, _positions, history=history, **kwargs)
 
+    def set_empty_history(self):
+        """ Sets empty snake history """
+        self.history = SnakeHistory.createEmpty()
+
     def duplicate(self, name=None, duplicate_history=True):
         """ Duplicates snake """
         if duplicate_history and self.history is not None:
@@ -251,6 +263,11 @@ class Snake():
     def hasHeadCollidedWithBody(self):
         """Returns if the current head position has collided with its body"""
         return np.any(np.all(self.positions[0] == self.positions[1:], axis=1))
+
+    def movesPerFood(self):
+        """ returns the mean moves taken to find food"""
+        if self.history is not None:
+            return self.history.movesPerFood()
 
     def feed(self, updateArrView=True, increaseMovesBy=25):
         """ Feeds snake a piece of fruit"""
