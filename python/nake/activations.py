@@ -31,12 +31,17 @@ class Relu(ActivationBase):
     """ rectified linear unit """
 
     def compute(self, x, out=None):
-        return np.maximum(x,0, out=out)
+        return np.maximum(x, 0, out=out)
 
-
-
-
-
+class LeakyRelu(ActivationBase):
+    """ leaky rectified linear unit """
+    def compute(self, x, out=None):
+        _out = np.where(x > 0, x, x * 0.01)
+        if out is not None:
+            out[:] = _out
+        else:
+            out = _out
+        return out
 
 
 
@@ -48,16 +53,9 @@ if __name__ == "__main__":
     # Create activation
     act = Activation.getInitialized("tanh")
     act2 = Activation.getInitialized("relu")
+    act3 = Activation.getInitialized("leakyrelu")
 
-    path = r"C:\tmp\activation_test.hdf5"
-
-    with h5py.File(path, "w") as FILE:
-        act.setDataOnGroup(FILE.create_group("activation"))
-        act2.setDataOnGroup(FILE.create_group("activation2"))
-
-    with h5py.File(path, "r") as FILE:
-        print (Activation(FILE.get("activation")))
-        print(Activation(FILE.get("activation2")))
+    print (act3.compute(np.arange(10)-5))
 
 
 

@@ -131,7 +131,7 @@ class Snake():
     POSITIONS = "positions"
     STATE = "state"
 
-    DEFAULT_MOVES = 25
+    DEFAULT_MOVES = 18
 
     def __init__(self, headIdx, length, direction,
                  positions, movesRemaining=None, name=None, history=None):
@@ -269,12 +269,12 @@ class Snake():
         if self.history is not None:
             return self.history.movesPerFood()
 
-    def feed(self, updateArrView=True, increaseMovesBy=25):
+    def feed(self, updateArrView=True, increaseMovesBy=None):
         """ Feeds snake a piece of fruit"""
         self.length += 1
         if updateArrView:
             self.updatePositionalView()
-        self.movesRemaining += increaseMovesBy
+        self.movesRemaining += increaseMovesBy or self.DEFAULT_MOVES
 
         if self.history is not None:
             self.history.addEat()
@@ -395,3 +395,28 @@ class Snake():
             name=name,
             history=history
         )
+
+
+
+if __name__ == "__main__":
+    from board import Board
+    from food import FoodGenerator
+
+    foodGenerator = FoodGenerator(Board.fromDims(10, 10), (1, 1), 2321)
+    snake = Snake.initializeAtPosition(
+        (5,5),
+        direction=consts.Moves.DOWN,
+        name="loop",
+        history=True,
+        length=4
+    )
+
+
+    import matplotlib.pyplot as plt
+    a = snake.generatePreviewImage(foodGenerator.board)
+
+    plt.imshow(a, vmin=0, vmax=255, cmap="gray")
+    plt.show()
+
+
+

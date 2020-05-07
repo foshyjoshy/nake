@@ -214,11 +214,13 @@ class Dense(LayerBase):
             activation = Activation.getInitialized("tanh")
         else:
             if not Activation.isObjectRegistered(activation):
-                if not isinstance(activation, dict):
+                if isinstance(activation, dict):
+                    activation = Activation(**activation)
+                elif isinstance(activation, str):
+                    activation = Activation(class_name=activation)
+                else:
                     raise Exception("{} is not a "\
                     "registered activation. Use {}".format(activation, Activation.registeredClasses()))
-                else:
-                    activation = Activation(**activation)
 
         self.activation = activation
 
@@ -286,7 +288,7 @@ class Dense(LayerBase):
             # Setting random weights between -1 and 0
             self.weights[indexes] = random_values
         else:
-            self.weights[indexes] = np.clip(self.weights[indexes] + (random_values*0.1), -1, 1)
+            self.weights[indexes] = np.clip(self.weights[indexes] + (random_values*0.2), -1, 1)
 
 
     def isCrossCompatible(self, other):
