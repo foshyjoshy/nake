@@ -122,13 +122,13 @@ class BasicBrain(BrainBase):
         return "{} {}".format(super().__str__(), self.sequential_model)
 
     @classmethod
-    def create(cls, n_inputs=14, n_hidden_inputs=16, n_outputs=4, **kwargs):
+    def create(cls, n_inputs=14, n_hidden_inputs=16, n_outputs=4, activation=None, **kwargs):
         """ Sets up a basic brain class"""
         sequential_model = SequentialModel([
-                    Dense("input_layer", n_inputs, n_hidden_inputs),
-                    Dense("hidden_00", n_hidden_inputs, n_hidden_inputs),
-                    Dense("hidden_01", n_hidden_inputs, n_hidden_inputs),
-                    Dense("output_layer", n_hidden_inputs, n_outputs),
+                    Dense("input_layer", n_inputs, n_hidden_inputs, activation=activation),
+                    Dense("hidden_00", n_hidden_inputs, n_hidden_inputs, activation=activation),
+                    Dense("hidden_01", n_hidden_inputs, n_hidden_inputs, activation=activation),
+                    Dense("output_layer", n_hidden_inputs, n_outputs, activation=activation),
                          ])
         return cls(sequential_model,**kwargs)
 
@@ -215,12 +215,14 @@ class BrainGeneratorBase(RegistryItemBase):
     REGISTRY = BrainGenerators
 
     DEFAULT_N_GENERATE = 10
-    DEFAULT_MUTATE_RATE = 5
+    DEFAULT_MUTATE_RATE = 10
     DEFAULT_BRAIN_NAME = "brain_{idx:09d}"
+    DEFAULT_ADD_PARENTS = True
 
     BRAIN_NAME = "brain_name"
     N_GENERATE = "n_generate"
     MUTATE_RATE = "mutate_rate"
+    ADD_PARENTS = "add_parents"
 
 
     def __init__(self, n_generate=None, brain_name=None):
@@ -281,7 +283,7 @@ class BasicBrainGenerator(BrainGeneratorBase):
 class CrossoverBrainGenerator(BrainGeneratorBase):
     """Crossovers input brains"""
 
-    def __init__(self, brains, *args, mutate_rate=None, **kwargs):
+    def __init__(self, brains, *args, mutate_rate=None, add_parents=None, **kwargs):
         super().__init__(*args, **kwargs)
 
         for idx, brain in enumerate(brains):
@@ -290,10 +292,16 @@ class CrossoverBrainGenerator(BrainGeneratorBase):
                                 "registered activation. Use {}".format(brains[idx], Brains.registeredClasses()))
 
         self.mutate_rate = mutate_rate or self.DEFAULT_MUTATE_RATE
+        self.add_parents = add_parents or self.DEFAULT_ADD_PARENTS
         self.brains = brains
 
     def generate(self, idx):
         """  generates and returns new brain"""
+        if self.add_parents and idx < len(self.brains):
+            return self.brains[idx].duplicate(
+                        name=self.generate_name(idx),
+                        duplicate_arrs=True
+                        )
         brain = crossover(self.generate_name(idx), *self.brains)
         if self.mutate_rate:
             brain.mutate(rate=self.mutate_rate)

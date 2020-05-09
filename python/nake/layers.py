@@ -44,6 +44,19 @@ class SequentialModel():
     def __getstate__(self):
         return {self.LAYERS : [layer.__getstate__() for layer in self]}
 
+    def __eq__(self, obj):
+        if isinstance(obj, SequentialModel):
+            if obj.n_layers == self.n_layers:
+                for idx, layer in enumerate(self.layers):
+                    if not layer == obj.layers[idx]:
+                        break
+                else:
+                    return True
+            return False
+        else:
+            return super().__eq__(obj)
+
+
     def layerByName(self, name):
         """ returns the layer for the given name"""
         for layer in self:
@@ -167,6 +180,18 @@ class LayerBase(RegistryItemBase):
     def __init__(self, name):
         self.name = name
 
+    def __eq__(self, obj):
+        if type(self) is type(obj):
+            arrs = self.getArrs()
+            other_arrs = obj.getArrs()
+            if sorted(arrs.keys()) == sorted(other_arrs.keys()):
+                for arr_name, arr in arrs.items():
+                    if not np.all(arr == other_arrs[arr_name]):
+                        break
+                else:
+                    return True
+            return False
+        return super().__eq__(obj)
 
     @abstractmethod
     def mutate(self, percent=5):
@@ -188,7 +213,6 @@ class LayerBase(RegistryItemBase):
     @abstractmethod
     def setArr(self, arr_name, arr):
         """ Sets arr via name """
-
 
     def __getstate__(self):
         return {
