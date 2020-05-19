@@ -260,6 +260,14 @@ class Snake():
                                      np.zeros([n, 2], dtype=self._positions.dtype)])
         self.updatePositionalView()
 
+    def pointInside(self, point):
+        """ Returns if x,y point is inside snake"""
+        return np.any(np.all(point == self.positions, axis=1))
+
+    def pointOutside(self, point):
+        """ Returns if x,y point is outside of snake"""
+        return self.pointInside(point) == False
+
     def hasHeadCollidedWithBody(self):
         """Returns if the current head position has collided with its body"""
         return np.any(np.all(self.positions[0] == self.positions[1:], axis=1))

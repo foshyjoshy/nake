@@ -2,7 +2,7 @@ from brain import Brains, BasicBrain, CrossoverBrainGenerator, BasicBrainGenerat
 from snake import Snake, SnakeActions
 from board import Board
 from food import FoodGenerator
-from run import run_generator, run_snake
+from run import run_generator, run_snake, RunScenario
 from run_stats import RunStats
 from snakeio import Reader
 
@@ -20,82 +20,37 @@ import time
 
 
 
-
-def callback_move(snake, board):
-    im = snake.generatePreviewImage(board)
-    plt.imshow(im, vmax=255)
-    plt.show()
-
-
 if __name__ == "__main__":
-    print ("Running")
-    foodGenerator = FoodGenerator(Board.fromDims(10, 10), (1, 1), 2321)
-    snake = Snake.initializeAtPosition(
+
+    snake_01 = Snake.initializeAtPosition(
         (5,5),
         direction=consts.Moves.DOWN,
         name="loop",
         history=True,
         length=4
     )
-    #
-    # reader = Reader(r"C:\tmp\generation.0036.zip")
-    # ndata = reader.read_numpy("run_stats.npz")
-    # stats = ndata["stats"]
-    # indexes = np.argsort(stats, order=[Stats.LENGTH, Stats.MOVES_PER_FOOD, Stats.MOVES_MADE])
-    #
-    # F = reader.read_bytesIO(reader.brains_info[indexes[-2]])
-    # b2 = Brains.load(F)
-    # F = reader.read_bytesIO(reader.brains_info[indexes[-1]])
-    # b1 = Brains.load(F)
 
-    # term = run_snake(snake, b2.duplicate(), foodGenerator, callback_move=callback_move)
-    # quit()
+    food_generator_01 = FoodGenerator(Board.fromDims(10, 10), (1, 1), 434343)
+    scenario_01 = RunScenario(snake_01, food_generator_01)
 
-    brain = BasicBrain.create(activation="leakyrelu", name="generator_brain")
+    food_generator_02 = FoodGenerator(Board.fromDims(10, 10), (1, 1), 554545)
+    scenario_02 = RunScenario(snake_01, food_generator_02)
 
-    brain_generator = BasicBrainGenerator(n_generate=100, brain=brain)
+    food_generator_03 = FoodGenerator(Board.fromDims(10, 10), (1, 1), 942)
+    scenario_03 = RunScenario(snake_01, food_generator_03)
 
-    # brain_generator = CrossoverBrainGenerator(
-    #     [b1, b2],
-    #     n_generate=50000,
-    # )
+    food_generator_04 = FoodGenerator(Board.fromDims(10, 10), (1, 1), 876534)
+    scenario_04 = RunScenario(snake_01, food_generator_04)
 
-    for i in range(1, 100000):
-        filepath = r"C:\tmp\generation.%04d.zip" % i
 
-        t = time.perf_counter()
-        term = run_generator(brain_generator, snake, foodGenerator, filepath)
-        quit()
-        print(time.perf_counter() - t)
+    scenarios = [
+        scenario_01,
+        scenario_02,
+        scenario_03,
+        scenario_04
+    ]
 
-        reader = Reader(filepath)
-        ndata = reader.read_numpy("cut_stats.npz")
-        stats = ndata["stats"]
-        file_paths = ndata["names"]
+    generator = BasicBrainGenerator(n_generate=99)
 
-        nbrains = []
-        for bidx in range(0, 5):
-            # TODO use paths rather than indexes
-            F = reader.read_bytesIO(reader.brains_info[bidx])
-            nbrains.append(Brains.load(F))
 
-        _snake = snake.duplicate()
-        _foodGenerator = foodGenerator.duplicate(initialState=True)
-
-        term = run_snake(_snake, nbrains[0].duplicate(), _foodGenerator)
-
-        print ("Term {} movesR {} perFood {} length {} movesM {}".format(
-            term,
-            _snake.movesRemaining,
-            _snake.movesPerFood(),
-
-            _snake.length,
-            _snake.history.moves_made()
-        ))
-        print(stats)
-
-        brain_generator = CrossoverBrainGenerator(
-            nbrains,
-            n_generate=brain_generator.n_generate,
-            add_parents=False
-        )
+    run_generator(generator, scenarios)

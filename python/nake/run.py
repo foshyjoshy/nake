@@ -109,107 +109,65 @@ def run_snake(snake, brain, foodGenerator, board=None, callback_move=None, callb
 
 
 
+class RunScenario:
+    """ used to create a scenario for running brains"""
+
+    def __init__(self, snake, food_generator, duplicate_inputs=True):
+        # Checking if inputs are correct
+        isinstance(snake, Snake)
+        isinstance(food_generator, FoodGenerator)
+
+        # Checks if food its inside the current snake
+        if snake.pointInside(food_generator):
+            raise Exception("{} is inside snake".format(food_generator))
+
+        if duplicate_inputs:
+            self.snake = snake.duplicate()
+            self.food_generator = food_generator.duplicate(
+                initialState=True,
+                keepBoard=False,  # makes sure we duplicate the board
+            )
+        else:
+            self.snake = snake
+            self.food_generator = food_generator
+
+    def get_duplicated_snake(self):
+        """ Returns a duplicate of the input snake """
+        snake = self.snake.duplicate(duplicate_history=False)
+        snake.set_empty_history()
+        return snake
+
+    def get_duplicated_food_generator(self):
+        """ Return a duplicate of the input food generator"""
+        return self.food_generator.duplicate(
+            initialState=True,
+            keepBoard=False,
+        )
+
+    def run_brain(self, brain, *args, **kwargs):
+        """ Runs a brain through this scenario"""
+
+        snake = self.get_duplicated_snake()
+        food_generator = self.get_duplicated_food_generator()
+
+        run_stats = run_snake(
+            snake,
+            brain,
+            food_generator,
+            board=food_generator.board,
+            *args,
+            **kwargs
+        )
 
 
-def run_generator(brain_generator, input_snake, input_food_generator, output_path, close_file=True, max_save=10):
-    """ Ru n a brain generator """
+def run_generator(brain_generator, scenarios):
+    """ Run a brain generator """
 
-    _time = perf_counter()
-    _times = []
-
-    # Making sure our snake has a history object for creating stats
-    if input_snake.history is None:
-        input_snake.set_empty_history()
-
-    # Creating run stats object to save every brains performance
-    stats_stash = RunStatsStash(brain_generator.n_generate)
-
-    # Creating brain stash to save only x number of best brains
-    brain_stash = BrainRunStash(max_brains=max_save)
-
-    #_times.append(("Setup", perf_counter()-_time))
-
-    brains = []
     for brain in brain_generator:
-        # Duplicating inputs
-        snake = input_snake.duplicate()
-        food_generator = input_food_generator.duplicate(initialState=True)
-
-        # Run snake
-        run_stats = run_snake(snake, brain, food_generator)
-
-        # Adding run stats into stat stash
-        stats_stash.append(key=brain.name, **run_stats)
-
-        # Adding brain to brain stash if performed well
-        brain_stash.add_brain(brain=brain, **run_stats)
-
-
-    quit()
+        for sidx, scenario in enumerate(scenarios):
+            run_stats = scenario.run_brain(brain)
 
 
 
 
-    # # Creating writer to save output
-    # writer = Writer(output_path)
-    # # Writing input food generator
-    # writer.write_food(input_food_generator, name="input_foodGenerator")
-    # # Writing input snake
-    # writer.write_snake(input_snake, name="input_snake")
 
-    # import os
-    # import psutil
-    # process = psutil.Process(os.getpid())
-    # print(process.memory_info().rss*1e-6)
-
-
-
-    _times.append(("run", perf_counter()-_time))
-    # process = psutil.Process(os.getpid())
-    # print(process.memory_info().rss*1e-6)
-    # #quit()
-
-    # Saving complete stats as pandas
-    data_frame = pd.DataFrame(stats, columns=stats.dtype.names, index=brain_names)
-    F = BytesIO()
-    data_frame.to_excel(F, merge_cells=False)
-    writer.zip.writestr("complete_stats.xlsx", F.getbuffer())
-
-    # Saving complete as npy
-    F = BytesIO()
-    np.savez(F, stats=stats, names=brain_names)
-    writer.zip.writestr("complete_stats.npz", F.getbuffer())
-
-    # Sorting stats so we only save the x amount of good snakes.
-    stats[Stats.MOVES_PER_FOOD] *= -1
-    indexes = np.argsort(stats, order=[Stats.LENGTH, Stats.MOVES_MADE, Stats.MOVES_PER_FOOD])[::-1]
-
-    #indexes = np.argsort(stats, order=[Stats.LENGTH, Stats.MOVES_PER_FOOD, Stats.MOVES_MADE])[::-1]
-
-    # Writing brains to zip
-    brain_filenames = []
-    for idx in range(min(max_save, indexes.shape[0])):
-        brain_filenames.append(writer.write_brain(brains[indexes[idx]]))
-
-    # Updating stats length
-    stats = stats[indexes[:len(brain_filenames)]]
-
-    # Saving stats as pandas
-    data_frame = pd.DataFrame(stats, columns=stats.dtype.names, index=brain_filenames)
-    F = BytesIO()
-    data_frame.to_excel(F, merge_cells=False)
-    writer.zip.writestr("cut_stats.xlsx", F.getbuffer())
-
-    # Saving stats as npy
-    F = BytesIO()
-    np.savez(F, stats=stats, names=brain_filenames)
-    writer.zip.writestr("cut_stats.npz", F.getbuffer())
-
-    if close_file:
-        writer.close()
-
-    _times.append(("cleanup", perf_counter() - _time))
-
-    pprint(_times)
-
-    return writer.filename

@@ -117,6 +117,7 @@ class FoodGenerator():
 
     def duplicate(self, keepBoard=True, initialState=False):
         """ Returns a copy of this class """
+        # TODO use initialState??
         state = self.__getstate__()
         if keepBoard:
             state[self.BOARD] = self.board
