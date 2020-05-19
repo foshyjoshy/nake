@@ -2,7 +2,7 @@ import numpy as np
 import consts
 
 
-def moves2Body(headPos, bodyPositions, angles=consts.ANGLES_45, moves=None):
+def moves2Body(headPos, bodyPositions, angles=consts.ANGLES_45, moves=None, default_value=None):
     """ Returns number of moves to the head
         Angles in degrees, clockwise
         0 == Up
@@ -10,9 +10,10 @@ def moves2Body(headPos, bodyPositions, angles=consts.ANGLES_45, moves=None):
         180 == Down
         270 == Left
     """
+    if default_value is None:
+        default_value = -1
     if moves is None:
-        moves = np.ones(len(angles), dtype=np.float32) * -1
-
+        moves = np.zeros(len(angles), dtype=np.float32)
 
     # Getting angle
     diff = (bodyPositions-headPos).astype(np.float32)
@@ -26,7 +27,7 @@ def moves2Body(headPos, bodyPositions, angles=consts.ANGLES_45, moves=None):
         if idxs.shape[0]:
             moves[idx] = np.min(dist[idxs])
         else:
-            moves[idx] = -1
+            moves[idx] = default_value
 
     return moves
 

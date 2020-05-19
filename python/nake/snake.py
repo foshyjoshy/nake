@@ -131,7 +131,7 @@ class Snake():
     POSITIONS = "positions"
     STATE = "state"
 
-    DEFAULT_MOVES = 18
+    DEFAULT_MOVES = 28
 
     def __init__(self, headIdx, length, direction,
                  positions, movesRemaining=None, name=None, history=None):
@@ -330,12 +330,12 @@ class Snake():
         """ Returns the number moves to the four walls"""
         return board.movesToBoardEdges(self.headPosition, moves=moves)
 
-    def moves2Self(self, moves=None):
+    def moves2Self(self, moves=None, default_value=None):
         """ Returns the number of moves to itself in 45% increments """
         return utils.moves2Body(
-            self.headPosition, self.bodyPositions, consts.ANGLES_45, moves=moves)
+            self.headPosition, self.bodyPositions, consts.ANGLES_45, moves=moves, default_value=default_value)
 
-    def generatePreviewImage(self, board, color_head=255, color_body=127, color_board=0, dtype=np.uint8):
+    def generatePreviewImage(self, board, color_head=180, color_body=100, color_board=0, dtype=np.uint8):
         """ Simple view of the snake"""
         min_value = np.iinfo(dtype).min
         max_value = np.iinfo(dtype).max

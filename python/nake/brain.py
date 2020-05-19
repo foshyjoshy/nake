@@ -122,7 +122,7 @@ class BasicBrain(BrainBase):
         return "{} {}".format(super().__str__(), self.sequential_model)
 
     @classmethod
-    def create(cls, n_inputs=14, n_hidden_inputs=16, n_outputs=4, activation=None, **kwargs):
+    def create(cls, n_inputs=14, n_hidden_inputs=14, n_outputs=4, activation=None, **kwargs):
         """ Sets up a basic brain class"""
         sequential_model = SequentialModel([
                     Dense("input_layer", n_inputs, n_hidden_inputs, activation=activation),
@@ -186,7 +186,7 @@ class BasicBrain(BrainBase):
             self.sequential_model.input_arr[4:6, 0] = food.pos - snake.headPosition
         else:
             self.sequential_model.input_arr[4:6, 0] = 0
-        snake.moves2Self(moves=self.sequential_model.input_arr[6:14, 0])
+        snake.moves2Self(moves=self.sequential_model.input_arr[6:14, 0], default_value=9999)
         return self.sequential_model.compute()
 
 
@@ -215,7 +215,7 @@ class BrainGeneratorBase(RegistryItemBase):
     REGISTRY = BrainGenerators
 
     DEFAULT_N_GENERATE = 10
-    DEFAULT_MUTATE_RATE = 10
+    DEFAULT_MUTATE_RATE = 5
     DEFAULT_BRAIN_NAME = "brain_{idx:09d}"
     DEFAULT_ADD_PARENTS = True
 
