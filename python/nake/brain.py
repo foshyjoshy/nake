@@ -230,6 +230,9 @@ class BrainGeneratorBase(RegistryItemBase):
         self.n_generate = n_generate or self.DEFAULT_N_GENERATE
         self.n_generated = 0
 
+    def __len__(self):
+        return self.n_generate
+
     def __iter__(self):
         self.n_generated = 0
         return self

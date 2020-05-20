@@ -33,13 +33,13 @@ if __name__ == "__main__":
     food_generator_01 = FoodGenerator(Board.fromDims(10, 10), (1, 1), 434343)
     scenario_01 = RunScenario(snake_01, food_generator_01)
 
-    food_generator_02 = FoodGenerator(Board.fromDims(10, 10), (1, 1), 554545)
+    food_generator_02 = FoodGenerator(Board.fromDims(10, 10), (8, 1), 554545)
     scenario_02 = RunScenario(snake_01, food_generator_02)
 
-    food_generator_03 = FoodGenerator(Board.fromDims(10, 10), (1, 1), 942)
+    food_generator_03 = FoodGenerator(Board.fromDims(10, 10), (1, 8), 942)
     scenario_03 = RunScenario(snake_01, food_generator_03)
 
-    food_generator_04 = FoodGenerator(Board.fromDims(10, 10), (1, 1), 876534)
+    food_generator_04 = FoodGenerator(Board.fromDims(10, 10), (8, 8), 876534)
     scenario_04 = RunScenario(snake_01, food_generator_04)
 
 
@@ -50,7 +50,7 @@ if __name__ == "__main__":
         scenario_04
     ]
 
-    generator = BasicBrainGenerator(n_generate=99)
+    generator = BasicBrainGenerator(n_generate=100000)
 
 
-    run_generator(generator, scenarios)
+    print (run_generator(generator, scenarios))

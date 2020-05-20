@@ -125,6 +125,7 @@ class Snake():
     """ Snake class """
 
     MOVES_REMAINING = "moves_remaining"
+    MOVES_INCREASE_BY = "moves_increase_by"
     NAME = "name"
     DIRECTION = "direction"
     HISTORY = "history"
@@ -132,12 +133,12 @@ class Snake():
     STATE = "state"
 
     DEFAULT_MOVES = 28
+    DEFAULT_MOVES_INCREASE_BY = 28
 
     def __init__(self, headIdx, length, direction,
-                 positions, movesRemaining=None, name=None, history=None):
+                 positions, movesRemaining=None,
+                 moves_increase_by=None, name=None, history=None):
 
-        if movesRemaining is None:
-            movesRemaining = int(self.DEFAULT_MOVES)
         if not positions.dtype == consts.DTYPE_SNAKE:
             TypeError('{} dtype arr expected'.format(consts.DTYPE_SNAKE))
 
@@ -145,7 +146,8 @@ class Snake():
         self.length = length
         self.direction = direction
         self._positions = positions
-        self.movesRemaining = movesRemaining
+        self.movesRemaining = movesRemaining or int(self.DEFAULT_MOVES)
+        self.moves_increase_by = moves_increase_by or int(self.DEFAULT_MOVES_INCREASE_BY)
         self.name = name or ""
         self.history = history
 
@@ -221,6 +223,7 @@ class Snake():
             self.direction,
             self._positions.copy(),
             movesRemaining=int(self.movesRemaining),
+            moves_increase_by=int(self.moves_increase_by),
             name=name or self.name,
             history=history,
         )
@@ -277,13 +280,12 @@ class Snake():
         if self.history is not None:
             return self.history.movesPerFood()
 
-    def feed(self, updateArrView=True, increaseMovesBy=None):
+    def feed(self, updateArrView=True):
         """ Feeds snake a piece of fruit"""
         self.length += 1
         if updateArrView:
             self.updatePositionalView()
-        self.movesRemaining += increaseMovesBy or self.DEFAULT_MOVES
-
+        self.movesRemaining += self.moves_increase_by
         if self.history is not None:
             self.history.addEat()
 
@@ -367,6 +369,7 @@ class Snake():
         """ Writes snake to npz """
         state = {
             self.MOVES_REMAINING: self.movesRemaining,
+            self.MOVES_INCREASE_BY: self.moves_increase_by,
             self.NAME: self.name,
             self.DIRECTION: self.direction,
         }
@@ -400,6 +403,7 @@ class Snake():
             state[cls.DIRECTION],
             positions,
             movesRemaining=state.get(cls.MOVES_REMAINING, int(cls.DEFAULT_MOVES)),
+            moves_increase_by=state.get(cls.MOVES_INCREASE_BY),
             name=name,
             history=history
         )

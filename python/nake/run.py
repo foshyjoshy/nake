@@ -6,14 +6,12 @@ from consts import Moves, Terminated
 from snakeio import Writer
 from run_stats import RunStats, RunStatsStash
 
-
 from time import perf_counter
 from pprint import pprint
 
 import numpy as np
 import pandas as pd
 from io import BytesIO
-
 
 
 class BrainRunStash:
@@ -40,14 +38,11 @@ class BrainRunStash:
     def add_brain(self, brain, **kwargs):
         """ adds a brain to the stash"""
         if self.stats.is_full():
-            print ("ssss")
+            print("ssss")
             quit()
         else:
             self.stats.append(brain, **kwargs)
             return True
-
-
-
 
 
 def run_snake(snake, brain, foodGenerator, board=None, callback_move=None, callback_finished=None):
@@ -103,10 +98,10 @@ def run_snake(snake, brain, foodGenerator, board=None, callback_move=None, callb
         RunStats.TERM: term,
         RunStats.MOVES_REMAINING: snake.movesRemaining,
         RunStats.MOVES_MADE: snake.history.moves_made(),
+        RunStats.MOVES_PER_FOOD: snake.history.movesPerFood(),
         RunStats.LENGTH: snake.length,
         RunStats.DIRECTION: snake.direction.value,
     }
-
 
 
 class RunScenario:
@@ -131,6 +126,10 @@ class RunScenario:
             self.snake = snake
             self.food_generator = food_generator
 
+    @property
+    def board(self):
+        return self.food_generator.board
+
     def get_duplicated_snake(self):
         """ Returns a duplicate of the input snake """
         snake = self.snake.duplicate(duplicate_history=False)
@@ -150,7 +149,7 @@ class RunScenario:
         snake = self.get_duplicated_snake()
         food_generator = self.get_duplicated_food_generator()
 
-        run_stats = run_snake(
+        return run_snake(
             snake,
             brain,
             food_generator,
@@ -163,11 +162,55 @@ class RunScenario:
 def run_generator(brain_generator, scenarios):
     """ Run a brain generator """
 
+    # Storing stats for every brain processed
+    full_stats_stashs = [RunStatsStash(len(brain_generator)) for i in range(len(scenarios))]
+
+
+    scores = []
+
     for brain in brain_generator:
+
+        total_score = 0
         for sidx, scenario in enumerate(scenarios):
             run_stats = scenario.run_brain(brain)
+            full_stats_stashs[sidx].append(brain.name, **run_stats)
+
+            max_length = scenario.board.size
+            max_num_moves = (scenario.board.size - scenario.snake.length) \
+                            * scenario.snake.moves_increase_by \
+                            + scenario.snake.length
+
+            max_moves_per_food = max_num_moves / scenario.board.size
+
+            max_value = 1000000
+            multiplier_length = max_value / float(max_length)
+            multiplier_moves_per_food = multiplier_length / float(max_moves_per_food+1)
+            multiplier_moves_made = multiplier_moves_per_food / float(max_num_moves+1)
+
+            # Moves per food can been None is no food has been hit
+            moves_per_food = run_stats[RunStats.MOVES_PER_FOOD] or max_moves_per_food
+            r_moves_per_food = max_moves_per_food-float(moves_per_food)
+
+            score = run_stats[RunStats.LENGTH] * multiplier_length
+            score += r_moves_per_food * multiplier_moves_per_food
+            score += run_stats[RunStats.MOVES_MADE] * multiplier_moves_made
+
+            total_score += score
+
+        scores.append(total_score / len(scenarios))
+
+
+    for idx in np.argsort(scores)[-10:]:
+        for i in full_stats_stashs:
+            print (i._stats[idx],)
+        print ()
+
+
+    import matplotlib.pyplot as plt
+    plt.plot(scores)
+    plt.show()
 
 
 
 
-
+    return full_stats_stashs
