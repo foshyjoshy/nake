@@ -126,6 +126,7 @@ class Snake():
 
     MOVES_REMAINING = "moves_remaining"
     MOVES_INCREASE_BY = "moves_increase_by"
+    MOVES_MADE = "moves_made"
     NAME = "name"
     DIRECTION = "direction"
     HISTORY = "history"
@@ -136,7 +137,7 @@ class Snake():
     DEFAULT_MOVES_INCREASE_BY = 28
 
     def __init__(self, headIdx, length, direction,
-                 positions, movesRemaining=None,
+                 positions, movesRemaining=None, moves_made=0,
                  moves_increase_by=None, name=None, history=None):
 
         if not positions.dtype == consts.DTYPE_SNAKE:
@@ -146,6 +147,7 @@ class Snake():
         self.length = length
         self.direction = direction
         self._positions = positions
+        self.moves_made = moves_made
         self.movesRemaining = movesRemaining or int(self.DEFAULT_MOVES)
         self.moves_increase_by = moves_increase_by or int(self.DEFAULT_MOVES_INCREASE_BY)
         self.name = name or ""
@@ -223,6 +225,7 @@ class Snake():
             self.direction,
             self._positions.copy(),
             movesRemaining=int(self.movesRemaining),
+            moves_made=int(self.moves_made),
             moves_increase_by=int(self.moves_increase_by),
             name=name or self.name,
             history=history,
@@ -318,6 +321,8 @@ class Snake():
         self.updatePositionalView()
         # Update our remaining moves
         self.movesRemaining -= 1
+        self.moves_made += 1
+
         return True
 
     def moveUp(self, **kwargs):
@@ -369,6 +374,7 @@ class Snake():
         """ Writes snake to npz """
         state = {
             self.MOVES_REMAINING: self.movesRemaining,
+            self.MOVES_MADE: self.moves_made,
             self.MOVES_INCREASE_BY: self.moves_increase_by,
             self.NAME: self.name,
             self.DIRECTION: self.direction,
@@ -403,6 +409,7 @@ class Snake():
             state[cls.DIRECTION],
             positions,
             movesRemaining=state.get(cls.MOVES_REMAINING, int(cls.DEFAULT_MOVES)),
+            moves_made=state.get(cls.MOVES_MADE, 0),
             moves_increase_by=state.get(cls.MOVES_INCREASE_BY),
             name=name,
             history=history

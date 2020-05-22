@@ -104,6 +104,65 @@ def run_snake(snake, brain, foodGenerator, board=None, callback_move=None, callb
     }
 
 
+
+
+from preview import VideoWriter
+
+class FlexiDraw:
+
+    def __init__(self, width, height):
+        self.width = width
+        self.height = height
+        self.arrs = []
+
+    def create_array(self):
+        """ """
+        return np.zeros((self.width, self.height), dtype=np.int64)
+
+    def draw_snake(self, snake):
+        """ """
+        if snake.moves_made > len(self.arrs):
+            self.arrs.append(self.create_array())
+        idx = snake.moves_made-1
+        pos = np.clip(snake.arr, (0,0), (self.height-1, self.width-1))
+        #self.arrs[idx][pos[:,1], pos[:,0]]+=1
+
+        head =  np.clip(snake.headPosition,(0,0), (self.height-1, self.width-1))
+
+        self.arrs[idx][pos[:, 1], pos[:, 0]] += 1
+        #self.arrs[idx][head[1], head[0]] += 1
+
+
+    def draw_callback(self, snake, brain, board, food):
+        self.draw_snake(snake)
+
+
+    def write(self, file_path):
+
+
+        im2 = np.zeros([16, 16], dtype=np.uint8)
+        writer = VideoWriter(file_path, 16, 16)
+        for arr in self.arrs:
+
+            arr = arr*(255/np.max(arr))
+
+
+
+            im2[3:13, 3:13] = arr.astype(np.uint8)
+
+
+
+            print(writer.write_im(im2))
+
+
+
+
+
+
+
+
+
+
 class RunScenario:
     """ used to create a scenario for running brains"""
 
@@ -162,9 +221,14 @@ class RunScenario:
 def run_generator(brain_generator, scenarios):
     """ Run a brain generator """
 
+    #scenarios = [scenarios[0]]
+
+
     # Storing stats for every brain processed
     full_stats_stashs = [RunStatsStash(len(brain_generator)) for i in range(len(scenarios))]
 
+
+    draw = FlexiDraw(10,10)
 
     scores = []
 
@@ -172,7 +236,7 @@ def run_generator(brain_generator, scenarios):
 
         total_score = 0
         for sidx, scenario in enumerate(scenarios):
-            run_stats = scenario.run_brain(brain)
+            run_stats = scenario.run_brain(brain, callback_move=draw.draw_callback)
             full_stats_stashs[sidx].append(brain.name, **run_stats)
 
             max_length = scenario.board.size
@@ -200,16 +264,30 @@ def run_generator(brain_generator, scenarios):
         scores.append(total_score / len(scenarios))
 
 
-    for idx in np.argsort(scores)[-10:]:
-        for i in full_stats_stashs:
-            print (i._stats[idx],)
-        print ()
+    # for idx in np.argsort(scores)[-10:]:
+    #     for i in full_stats_stashs:
+    #         print (i._stats[idx],)
+    #     print ()
 
 
     import matplotlib.pyplot as plt
-    plt.plot(scores)
-    plt.show()
 
+
+
+    draw.write(r"C:\tmp\render.mp4")
+
+    quit()
+
+    # for arr in draw.arrs:
+    #     plt.imshow(arr)
+    #     plt.show()
+    #
+    #
+    #
+    #
+    # plt.plot(scores)
+    # plt.show()
+    #
 
 
 
