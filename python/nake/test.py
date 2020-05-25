@@ -50,7 +50,7 @@ if __name__ == "__main__":
         scenario_04
     ]
 
-    generator = BasicBrainGenerator(n_generate=10000)
+    generator = BasicBrainGenerator(n_generate=1000)
 
 
     print (run_generator(generator, scenarios))
