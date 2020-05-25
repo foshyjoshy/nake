@@ -3,50 +3,15 @@ from brain import BrainBase
 from food import FoodGenerator
 from board import Board
 from consts import Moves, Terminated
-from snakeio import Writer
 from run_stats import RunStats, RunStatsStash
-
-from time import perf_counter
-from pprint import pprint
-
 import numpy as np
-import pandas as pd
-from io import BytesIO
+from callbacks import CallbackBase
 
 
-class BrainRunStash:
-    """ Stashing brains via stats """
 
-    DEFAULT_ORDER = [
-        RunStats.LENGTH,
-        RunStats.MOVES_MADE,
-        RunStats.MOVES_PER_FOOD
-    ]
-
-    def __init__(self, max_brains=10, sort_order=None):
-        self.stats = RunStatsStash(stash_size=max_brains, key_instance=BrainBase)
-        self.sort_order = sort_order or self.DEFAULT_ORDER
-
-    @property
-    def brains(self):
-        return self.keys
-
-    def get_position(self, **kwargs):
-        """ Based on the stats input it get the next index """
-        currentStatus = self.stats.stats
-
-    def add_brain(self, brain, **kwargs):
-        """ adds a brain to the stash"""
-        if self.stats.is_full():
-            print("ssss")
-            quit()
-        else:
-            self.stats.append(brain, **kwargs)
-            return True
-
-
-def run_snake(snake, brain, foodGenerator, board=None, callback_move=None, callback_finished=None):
+def run_snake(snake, brain, foodGenerator, board=None, callbacks=None):
     """ Runs snake until it terminates"""
+    callbacks = callbacks or []
     if board is None:
         board = foodGenerator.board
 
@@ -55,6 +20,9 @@ def run_snake(snake, brain, foodGenerator, board=None, callback_move=None, callb
     assert isinstance(foodGenerator, FoodGenerator)
     assert isinstance(board, Board)
     assert isinstance(brain, BrainBase)
+    for callback in callbacks:
+        assert isinstance(callback, CallbackBase)
+
 
     while snake.canMove():
         previous_move = snake.direction
@@ -64,8 +32,9 @@ def run_snake(snake, brain, foodGenerator, board=None, callback_move=None, callb
         # Moving snake
         snake.move(move)
 
-        if callback_move is not None:
-            callback_move(snake, brain, board, foodGenerator.pos)
+        # Run any snake moved callbacks
+        for callback in callbacks:
+            callback.snake_moved(snake, brain, board, foodGenerator.pos)
 
         if len(snake) > 1:
             # Checking if snake has moved back on itself
@@ -91,8 +60,9 @@ def run_snake(snake, brain, foodGenerator, board=None, callback_move=None, callb
     else:
         term = Terminated.UNABLE_TO_MOVE
 
-    if callback_finished is not None:
-        callback_finished(term, snake, brain, foodGenerator, board)
+    # Run any terminated callbacks
+    for callback in callbacks:
+        callback.snake_terminated(term, snake, brain, board, foodGenerator.pos)
 
     return {
         RunStats.TERM: term,
@@ -102,63 +72,6 @@ def run_snake(snake, brain, foodGenerator, board=None, callback_move=None, callb
         RunStats.LENGTH: snake.length,
         RunStats.DIRECTION: snake.direction.value,
     }
-
-
-
-
-from preview import VideoWriter
-
-class FlexiDraw:
-
-    def __init__(self, width, height):
-        self.width = width
-        self.height = height
-        self.arrs = []
-
-    def create_array(self):
-        """ """
-        return np.zeros((self.width, self.height), dtype=np.int64)
-
-    def draw_snake(self, snake):
-        """ """
-        if snake.moves_made > len(self.arrs):
-            self.arrs.append(self.create_array())
-        idx = snake.moves_made-1
-        pos = np.clip(snake.arr, (0,0), (self.height-1, self.width-1))
-        #self.arrs[idx][pos[:,1], pos[:,0]]+=1
-
-        head =  np.clip(snake.headPosition,(0,0), (self.height-1, self.width-1))
-
-        self.arrs[idx][pos[:, 1], pos[:, 0]] += 1
-        #self.arrs[idx][head[1], head[0]] += 1
-
-
-    def draw_callback(self, snake, brain, board, food):
-        self.draw_snake(snake)
-
-
-    def write(self, file_path):
-
-
-        im2 = np.zeros([16, 16], dtype=np.uint8)
-        writer = VideoWriter(file_path, 16, 16)
-        for arr in self.arrs:
-
-            arr = arr*(255/np.max(arr))
-
-
-
-            im2[3:13, 3:13] = arr.astype(np.uint8)
-
-
-
-            print(writer.write_im(im2))
-
-
-
-
-
-
 
 
 
@@ -220,95 +133,29 @@ class RunScenario:
 
 
 
-
-class ScoreRun:
-
-
-    def __init__(self, max_length, max_num_moves, max_moves_per_food, max_value=1000000):
-        self.max_length = max_length
-        self.max_num_moves = max_num_moves
-        self.max_moves_per_food = max_moves_per_food
-        self.multiplier_length = max_value / float(self.max_length)
-        self.multiplier_moves_per_food = self.multiplier_length / float(self.max_moves_per_food + 1)
-        self.multiplier_moves_made = self.multiplier_moves_per_food / float(self.max_num_moves + 1)
-
-    @staticmethod
-    def compute_inputs(snake, food_generator):
-        """ Computes __init__ class inputs """
-        board = food_generator.board
-        max_length = board.size
-        max_num_moves = (board.size - snake.length) * snake.moves_increase_by + snake.length
-        max_moves_per_food = max_num_moves / board.size
-        return max_length, max_num_moves, max_moves_per_food
-
-
-    @classmethod
-    def from_scenario(cls, scenario, **kwargs):
-        return cls(*cls.compute_inputs(scenario.snake, scenario.food_generator))
-
-
-    def score_stats(self,**run_stats):
-        """ Computing sore on run_stats... returning a single float value"""
-        # Moves per food can been None is no food has been hit
-        moves_per_food = run_stats[RunStats.MOVES_PER_FOOD] or self.max_moves_per_food
-        r_moves_per_food = self.max_moves_per_food - float(moves_per_food)
-
-        score = run_stats[RunStats.LENGTH] * self.multiplier_length
-        score += r_moves_per_food * self.multiplier_moves_per_food
-        score += run_stats[RunStats.MOVES_MADE] * self.multiplier_moves_made
-
-        return score
-
-
-def run_generator(brain_generator, scenarios, scorer):
+def run_generator(brain_generator, scenarios, scorer, callbacks=None):
     """ Run a brain generator """
 
     # Storing stats for every brain processed
     full_stats_stash = [RunStatsStash(len(brain_generator)) for i in range(len(scenarios))]
 
+    # Full scores
+    full_scores = np.zeros([len(brain_generator), len(scenarios)])
 
-    draw = FlexiDraw(10,10)
+    brains = []
+    for b_idx, brain in enumerate(brain_generator):
+        for s_idx, scenario in enumerate(scenarios):
+            # Running brain
+            run_stats = scenario.run_brain(brain, callbacks=callbacks)
+            # Stashing run stats
+            full_stats_stash[s_idx].append(brain.name, **run_stats)
+            # Scoring stats
+            full_scores[b_idx, s_idx] = scorer.score_stats(**run_stats)
 
-    scores = []
+        mean_score = np.mean(full_scores[b_idx])
+        brains.append((mean_score, brain))
+        brains.sort(key=lambda x: -x[0])
+        brains = brains[:25]
 
-    for brain in brain_generator:
+    return full_stats_stash, full_scores, [i[1] for i in brains]
 
-        total_score = 0
-        for sidx, scenario in enumerate(scenarios):
-            run_stats = scenario.run_brain(brain, callback_move=draw.draw_callback)
-            full_stats_stash[sidx].append(brain.name, **run_stats)
-
-
-            total_score += scorer.score_stats(**run_stats)
-
-        scores.append(total_score / len(scenarios))
-
-
-    for idx in np.argsort(scores)[-10:]:
-        for i in full_stats_stashs:
-            print (i._stats[idx],)
-        print ()
-
-
-    import matplotlib.pyplot as plt
-
-
-
-    draw.write(r"C:\tmp\render.mp4")
-
-
-
-    # for arr in draw.arrs:
-    #     plt.imshow(arr)
-    #     plt.show()
-    # #
-    # #
-    #
-    # print (scores)
-    # plt.plot(scores)
-    # plt.show()
-    # #
-
-    quit()
-
-    return full_stats_stashs

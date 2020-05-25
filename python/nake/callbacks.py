@@ -1,0 +1,75 @@
+from abc import abstractmethod
+from registry import Registry, RegistryItemBase
+
+
+
+class Callbacks(Registry):
+    """ A class to store all callbacks"""
+    registry = {}
+
+
+
+class CallbackBase(RegistryItemBase):
+    """" Abstract base class for all callbacks to subclass """
+
+    REGISTRY = Callbacks
+
+    def snake_moved(self, snake, brain, board, food_position):
+        """ call back after snake is moved """
+        pass
+
+    def snake_terminated(self, term, snake, brain, board, food_position):
+        """ call back after snake is moved """
+        pass
+
+
+class TestCallback(CallbackBase):
+    """ Test callback that prints"""
+
+    def snake_moved(self, snake, brain, board, food_position):
+        """ call back after snake is moved """
+        print ("TestCallback")
+
+    def snake_terminated(self, term, snake, brain, board, food_position):
+        """ call back after snake is moved """
+        print ("snake_terminated")
+
+
+
+from preview import VideoWriter
+import numpy as np
+
+class FlexiDraw(CallbackBase):
+
+    def __init__(self, width, height):
+        self.width = width
+        self.height = height
+        self.arrs = []
+
+    def create_array(self):
+        """ """
+        return np.zeros((self.width, self.height), dtype=np.int64)
+
+    def draw_snake(self, snake):
+        """ """
+        if snake.moves_made > len(self.arrs):
+            self.arrs.append(self.create_array())
+        idx = snake.moves_made-1
+        pos = np.clip(snake.arr, (0,0), (self.height-1, self.width-1))
+        self.arrs[idx][pos[:,1], pos[:,0]]+=1
+
+    def snake_moved(self, snake, brain, board, food_position):
+        self.draw_snake(snake)
+
+
+    def write(self, file_path):
+
+        im2 = np.zeros([16, 16], dtype=np.uint8)
+        writer = VideoWriter(file_path, 16, 16)
+        for arr in self.arrs:
+
+            arr = arr*(255/np.max(arr))
+            im2[3:13, 3:13] = arr.astype(np.uint8)
+
+            writer.write_im(im2)
+        writer.close()

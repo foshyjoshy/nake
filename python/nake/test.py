@@ -3,8 +3,9 @@ from snake import Snake, SnakeActions
 from board import Board
 from food import FoodGenerator
 from run import run_generator, run_snake, RunScenario
-from run_stats import RunStats
-from snakeio import Reader
+from scoring import ScoreRun
+from snakeio import Writer
+from callbacks import FlexiDraw
 
 import consts
 import matplotlib.pyplot as plt
@@ -50,7 +51,63 @@ if __name__ == "__main__":
         scenario_04
     ]
 
-    generator = BasicBrainGenerator(n_generate=1000)
+    # Creating a basic brain generator
+    brain = BasicBrain.create(activation="leakyrelu", name="generator_input")
+    generator = BasicBrainGenerator(brain=brain, n_generate=100000)
 
 
-    print (run_generator(generator, scenarios))
+    # Using this to score the run
+    scorer = ScoreRun.from_scenario(scenario_01)
+
+    generation = 0
+    while True:
+        generation += 1
+        print ("Running generation {}".format(generation))
+
+        draw_callback = FlexiDraw(10,10)
+
+        full_stats_stash, full_scores, brains = run_generator(
+            generator,
+            scenarios,
+            scorer,
+            callbacks = [draw_callback],
+        )
+
+        path = r"C:\tmp\generation.{:04d}.zip".format(generation)
+        writer = Writer(path)
+        for brain in brains:
+            writer.write_brain(brain)
+        writer.close()
+
+        # Creating generator
+        generator = CrossoverBrainGenerator(
+            brains=brains[:4],
+            n_generate=generator.n_generate,
+        )
+
+        for s_idx, stats in enumerate(full_stats_stash):
+            print (stats.get_stats_for_brain(brains[0]))
+
+
+        path = r"C:\tmp\generation.{:04d}.mp4".format(generation)
+        draw_callback.write(path)
+        print (path)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

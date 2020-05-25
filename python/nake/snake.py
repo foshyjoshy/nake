@@ -133,8 +133,8 @@ class Snake():
     POSITIONS = "positions"
     STATE = "state"
 
-    DEFAULT_MOVES = 28
-    DEFAULT_MOVES_INCREASE_BY = 28
+    DEFAULT_MOVES = 20
+    DEFAULT_MOVES_INCREASE_BY = 20
 
     def __init__(self, headIdx, length, direction,
                  positions, movesRemaining=None, moves_made=0,
@@ -414,28 +414,3 @@ class Snake():
             name=name,
             history=history
         )
-
-
-
-if __name__ == "__main__":
-    from board import Board
-    from food import FoodGenerator
-
-    foodGenerator = FoodGenerator(Board.fromDims(10, 10), (1, 1), 2321)
-    snake = Snake.initializeAtPosition(
-        (5,5),
-        direction=consts.Moves.DOWN,
-        name="loop",
-        history=True,
-        length=4
-    )
-
-
-    import matplotlib.pyplot as plt
-    a = snake.generatePreviewImage(foodGenerator.board)
-
-    plt.imshow(a, vmin=0, vmax=255, cmap="gray")
-    plt.show()
-
-
-

@@ -50,6 +50,11 @@ class RunStatsStash:
     def __len__(self):
         return self.current_size
 
+    def get_stats_for_brain(self, brain):
+        """ Returns the stats for the given brain"""
+        index = self.keys.index(brain.name)
+        return self._stats[index]
+
     def is_full(self):
         """ Returns if the number in the stash match its max size"""
         return self.current_size == len(self._stats)
