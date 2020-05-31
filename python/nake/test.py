@@ -34,13 +34,13 @@ if __name__ == "__main__":
     food_generator_01 = FoodGenerator(Board.fromDims(10, 10), (1, 1), 434343)
     scenario_01 = RunScenario(snake_01, food_generator_01)
 
-    food_generator_02 = FoodGenerator(Board.fromDims(10, 10), (8, 1), 554545)
+    food_generator_02 = FoodGenerator(Board.fromDims(10, 10), (8, 1), 5545245)
     scenario_02 = RunScenario(snake_01, food_generator_02)
 
-    food_generator_03 = FoodGenerator(Board.fromDims(10, 10), (1, 8), 942)
+    food_generator_03 = FoodGenerator(Board.fromDims(10, 10), (1, 8), 9242)
     scenario_03 = RunScenario(snake_01, food_generator_03)
 
-    food_generator_04 = FoodGenerator(Board.fromDims(10, 10), (8, 8), 876534)
+    food_generator_04 = FoodGenerator(Board.fromDims(10, 10), (8, 8), 8534)
     scenario_04 = RunScenario(snake_01, food_generator_04)
 
 
@@ -50,6 +50,7 @@ if __name__ == "__main__":
         scenario_03,
         scenario_04
     ]
+
 
     # Creating a basic brain generator
     brain = BasicBrain.create(activation="leakyrelu", name="generator_input")
@@ -85,29 +86,12 @@ if __name__ == "__main__":
             n_generate=generator.n_generate,
         )
 
-        for s_idx, stats in enumerate(full_stats_stash):
-            print (stats.get_stats_for_brain(brains[0]))
+        for idx in range(2)[::-1]:
+            print ()
+            for s_idx, stats in enumerate(full_stats_stash):
+                print (stats.get_stats_for_brain(brains[idx]))
 
 
         path = r"C:\tmp\generation.{:04d}.mp4".format(generation)
         draw_callback.write(path)
         print (path)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
