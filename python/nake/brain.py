@@ -3,8 +3,8 @@ from abc import abstractmethod
 from layers import SequentialModel, Dense
 import copy
 import numpy as np
-import os
-
+import utils
+import consts
 
 
 class Brains(Registry):
@@ -112,20 +112,24 @@ class BasicBrain(BrainBase):
     """ Basic brain """
 
     SEQUENTIAL_MODEL = "sequential_model"
+    DEFAULT_VALUE = "default_value"
+    N_INPUTS = 14
 
-    def __init__(self, sequential_model, *args, **kwargs):
+
+    def __init__(self, sequential_model, default_value=None, *args, **kwargs):
         assert isinstance(sequential_model, SequentialModel)
         self.sequential_model = sequential_model
+        self.default_value = default_value or -1
         super().__init__(*args, **kwargs)
 
     def __str__(self):
         return "{} {}".format(super().__str__(), self.sequential_model)
 
     @classmethod
-    def create(cls, n_inputs=14, n_hidden_inputs=22, n_outputs=4, activation=None, **kwargs):
+    def create(cls, n_hidden_inputs=22, n_outputs=4, activation=None, **kwargs):
         """ Sets up a basic brain class"""
         sequential_model = SequentialModel([
-                    Dense("input_layer", n_inputs, n_hidden_inputs, activation=activation),
+                    Dense("input_layer", cls.N_INPUTS, n_hidden_inputs, activation=activation),
                     Dense("hidden_00", n_hidden_inputs, n_hidden_inputs, activation=activation),
                     Dense("hidden_01", n_hidden_inputs, n_hidden_inputs, activation=activation),
                     Dense("output_layer", n_hidden_inputs, n_outputs, activation=activation),
@@ -146,6 +150,10 @@ class BasicBrain(BrainBase):
         model = SequentialModel.fromState(model_state, arrs=arrs)
         return cls(model, **state)
 
+    @property
+    def n_inputs(self):
+        """ Number of inputs to the sequential model"""
+        return self.sequential_model.n_inputs
 
     def isCrossCompatible(self, other):
         """ Checks if other brain is cross compatible"""
@@ -177,6 +185,7 @@ class BasicBrain(BrainBase):
         return {
             **super().__getstate__(),
             self.SEQUENTIAL_MODEL: copy.deepcopy(self.sequential_model.__getstate__()),
+            self.DEFAULT_VALUE: self.default_value,
                 }
 
     def computeMove(self, snake, board, food):
@@ -186,9 +195,38 @@ class BasicBrain(BrainBase):
             self.sequential_model.input_arr[4:6, 0] = food.pos - snake.headPosition
         else:
             self.sequential_model.input_arr[4:6, 0] = 0
-        snake.moves2Self(moves=self.sequential_model.input_arr[6:14, 0], default_value=9999)
+        snake.moves2Self(
+            moves=self.sequential_model.input_arr[6:14, 0],
+            default_value=self.default_value,
+        )
         return self.sequential_model.compute()
 
+
+class BasicBrain2(BasicBrain):
+    """ Basic brain """
+
+    SEQUENTIAL_MODEL = "sequential_model"
+    DEFAULT_VALUE = "default_value"
+    N_INPUTS = 20
+
+    def computeMove(self, snake, board, food):
+        """ Computes snakes move"""
+        snake.moves2BoardEdges(board, moves=self.sequential_model.input_arr[:4, 0])
+        if food.isAvailable:
+            utils.moves2Body(
+                snake.headPosition,
+                food.pos[..., None],
+                consts.ANGLES_45,
+                moves=self.sequential_model.input_arr[4:12, 0],
+                default_value=self.default_value
+            )
+        else:
+            self.sequential_model.input_arr[4:12, 0] = self.default_value
+        snake.moves2Self(
+            moves=self.sequential_model.input_arr[12:, 0],
+            default_value=self.default_value,
+        )
+        return self.sequential_model.compute()
 
 
 
