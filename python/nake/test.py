@@ -54,7 +54,7 @@ if __name__ == "__main__":
 
     # Creating a basic brain generator
     brain = BasicBrain2.create(activation="leakyrelu", name="generator_input")
-    generator = BasicBrainGenerator(brain=brain, n_generate=1000)
+    generator = BasicBrainGenerator(brain=brain, n_generate=100000)
 
 
     # Using this to score the run
@@ -95,3 +95,5 @@ if __name__ == "__main__":
         path = r"C:\tmp\generation.{:04d}.mp4".format(generation)
         draw_callback.write(path)
         print (path)
+
+

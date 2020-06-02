@@ -126,7 +126,7 @@ class BasicBrain(BrainBase):
         return "{} {}".format(super().__str__(), self.sequential_model)
 
     @classmethod
-    def create(cls, n_hidden_inputs=22, n_outputs=4, activation=None, **kwargs):
+    def create(cls, n_hidden_inputs=24, n_outputs=4, activation=None, **kwargs):
         """ Sets up a basic brain class"""
         sequential_model = SequentialModel([
                     Dense("input_layer", cls.N_INPUTS, n_hidden_inputs, activation=activation),

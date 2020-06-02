@@ -7,12 +7,17 @@ class ScoreRun:
         self.max_length = max_length
         self.max_num_moves = max_num_moves
         self.max_moves_per_food = max_moves_per_food
-        self.multiplier_length = max_value / float(self.max_length)
-        #self.multiplier_moves_per_food = self.multiplier_length / float(self.max_moves_per_food + 1)
-        #self.multiplier_moves_made = self.multiplier_moves_per_food / float(self.max_num_moves + 1)
 
+        # # length, moves per food, moves made
+        # self.multiplier_length = max_value / float(self.max_length)
+        # self.multiplier_moves_per_food = self.multiplier_length / float(self.max_moves_per_food + 1)
+        # self.multiplier_moves_made = self.multiplier_moves_per_food / float(self.max_num_moves + 1)
+
+        # length, moves made, moves per food
+        self.multiplier_length = max_value / float(self.max_length)
         self.multiplier_moves_made = self.multiplier_length / float(self.max_num_moves + 1)
         self.multiplier_moves_per_food = self.multiplier_moves_made / float(self.max_moves_per_food + 1)
+
 
     @staticmethod
     def compute_inputs(snake, food_generator):
