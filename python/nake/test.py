@@ -1,4 +1,4 @@
-from brain import Brains, BasicBrain, CrossoverBrainGenerator, BasicBrainGenerator
+from brain import Brains, BasicBrain2, CrossoverBrainGenerator, BasicBrainGenerator
 from snake import Snake, SnakeActions
 from board import Board
 from food import FoodGenerator
@@ -53,8 +53,8 @@ if __name__ == "__main__":
 
 
     # Creating a basic brain generator
-    brain = BasicBrain.create(activation="leakyrelu", name="generator_input")
-    generator = BasicBrainGenerator(brain=brain, n_generate=100000)
+    brain = BasicBrain2.create(activation="leakyrelu", name="generator_input")
+    generator = BasicBrainGenerator(brain=brain, n_generate=1000)
 
 
     # Using this to score the run
