@@ -28,20 +28,46 @@ if __name__ == "__main__":
         direction=consts.Moves.DOWN,
         name="loop",
         history=True,
-        length=4
+        length=4,
+        movesRemaining=40
     )
 
-    food_generator_01 = FoodGenerator(Board.fromDims(10, 10), (1, 1), 434343)
+    snake_02 = Snake.initializeAtPosition(
+        (5,5),
+        direction=consts.Moves.UP,
+        name="loop",
+        history=True,
+        length=4,
+        movesRemaining=40
+    )
+
+
+
+
+    board = Board.fromDims(11, 11)
+
+    food_generator_01 = FoodGenerator(board, (1, 1), 434343)
     scenario_01 = RunScenario(snake_01, food_generator_01)
 
-    food_generator_02 = FoodGenerator(Board.fromDims(10, 10), (8, 1), 5545245)
+    food_generator_02 = FoodGenerator(board, (9, 1), 5545245)
     scenario_02 = RunScenario(snake_01, food_generator_02)
 
-    food_generator_03 = FoodGenerator(Board.fromDims(10, 10), (1, 8), 9242)
-    scenario_03 = RunScenario(snake_01, food_generator_03)
+    food_generator_03 = FoodGenerator(board, (1, 9), 9242)
+    scenario_03 = RunScenario(snake_02, food_generator_03)
 
-    food_generator_04 = FoodGenerator(Board.fromDims(10, 10), (8, 8), 8534)
-    scenario_04 = RunScenario(snake_01, food_generator_04)
+    food_generator_04 = FoodGenerator(board, (9, 9), 8534)
+    scenario_04 = RunScenario(snake_02, food_generator_04)
+    #
+    # im = snake_01.generatePreviewImage(food_generator_01.board)
+    #
+    # im[food_generator_01.pos[1], food_generator_01.pos[0]] = 255
+    # im[food_generator_02.pos[1], food_generator_02.pos[0]] = 255
+    # im[food_generator_03.pos[1], food_generator_03.pos[0]] = 255
+    # im[food_generator_04.pos[1], food_generator_04.pos[0]] = 255
+
+    # plt.imshow(im)
+    # plt.show()
+
 
 
     scenarios = [
@@ -65,7 +91,9 @@ if __name__ == "__main__":
         generation += 1
         print ("Running generation {}".format(generation))
 
-        draw_callback = FlexiDraw(10,10)
+        draw_callback = FlexiDraw(11,11)
+        for scenario in scenarios:
+            scenario.callbacks = [FlexiDraw(11,11)]
 
         full_stats_stash, full_scores, brains = run_generator(
             generator,
@@ -83,7 +111,7 @@ if __name__ == "__main__":
         # Creating generator
         generator = CrossoverBrainGenerator(
             brains=brains[:4],
-            n_generate=generator.n_generate,
+            n_generate=100000,
         )
 
         for idx in range(2)[::-1]:
@@ -94,6 +122,8 @@ if __name__ == "__main__":
 
         path = r"C:\tmp\generation.{:04d}.mp4".format(generation)
         draw_callback.write(path)
+        for sidx, scenario in enumerate(scenarios):
+            scenario.callbacks[0].write(r"C:\tmp\generation.{:04d}.{:02d}.mp4".format(generation, sidx))
         print (path)
 
 

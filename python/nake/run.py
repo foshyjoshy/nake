@@ -79,10 +79,11 @@ def run_snake(snake, brain, foodGenerator, board=None, callbacks=None):
 class RunScenario:
     """ used to create a scenario for running brains"""
 
-    def __init__(self, snake, food_generator, duplicate_inputs=True):
+    def __init__(self, snake, food_generator, duplicate_inputs=True, callbacks=None):
         # Checking if inputs are correct
         isinstance(snake, Snake)
         isinstance(food_generator, FoodGenerator)
+        self.callbacks = callbacks
 
         # Checks if food its inside the current snake
         if snake.pointInside(food_generator):
@@ -115,7 +116,7 @@ class RunScenario:
             keepBoard=False,
         )
 
-    def run_brain(self, brain, *args, **kwargs):
+    def run_brain(self, brain, *args, callbacks=None, **kwargs):
         """ Runs a brain through this scenario"""
 
         snake = self.get_duplicated_snake()
@@ -127,6 +128,7 @@ class RunScenario:
             food_generator,
             board=food_generator.board,
             *args,
+            callbacks=(callbacks or []) + (self.callbacks or []),
             **kwargs
         )
 
