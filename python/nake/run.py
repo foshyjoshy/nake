@@ -23,6 +23,9 @@ def run_snake(snake, brain, foodGenerator, board=None, callbacks=None):
     for callback in callbacks:
         assert isinstance(callback, CallbackBase)
 
+    # Run any snake start callbacks
+    for callback in callbacks:
+        callback.snake_start(snake, brain, board, foodGenerator.pos)
 
     while snake.canMove():
         previous_move = snake.direction
@@ -135,8 +138,12 @@ class RunScenario:
 
 
 
-def run_generator(brain_generator, scenarios, scorer, callbacks=None):
+def run_generator(brain_generator, scenarios, scorer, callbacks=None, scenario_score_weights=None):
     """ Run a brain generator """
+
+    if scenario_score_weights is None:
+        scenario_score_weights = np.ones(len(scenarios))
+    print ("Using scenario_score_weights {}".format(scenario_score_weights))
 
     # Storing stats for every brain processed
     full_stats_stash = [RunStatsStash(len(brain_generator)) for i in range(len(scenarios))]
@@ -154,10 +161,21 @@ def run_generator(brain_generator, scenarios, scorer, callbacks=None):
             # Scoring stats
             full_scores[b_idx, s_idx] = scorer.score_stats(**run_stats)
 
-        mean_score = np.mean(full_scores[b_idx])
-        brains.append((mean_score, brain))
+        mean_score = np.mean(full_scores[b_idx]*scenario_score_weights)
+
+        # Doing this so top brains don't have the same score
+        if len(brains) > 3:
+            if mean_score == brains[0][0]:
+                continue
+            if mean_score == brains[1][0]:
+                continue
+            if mean_score == brains[2][0]:
+                continue
+
+        brains.append((mean_score, brain, np.argmax(full_scores[b_idx])))
         brains.sort(key=lambda x: -x[0])
         brains = brains[:25]
+
 
     return full_stats_stash, full_scores, [i[1] for i in brains]
 

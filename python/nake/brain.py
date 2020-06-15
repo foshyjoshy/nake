@@ -23,7 +23,10 @@ class Brains(Registry):
     @classmethod
     def load(cls, filepath, name=None):
         """ Loads brain from npz filepath"""
-        npfile = np.load(filepath, allow_pickle=True)
+        if isinstance(filepath, np.lib.npyio.NpzFile):
+            npfile = filepath
+        else:
+            npfile = np.load(filepath, allow_pickle=True)
         arrs = dict(npfile.items())
         state = arrs.pop(BrainBase.STATE).item()
         if name is not None:

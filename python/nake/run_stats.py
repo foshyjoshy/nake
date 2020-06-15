@@ -75,3 +75,7 @@ class RunStatsStash:
             raise Exception("Stash is full. Unable to add more")
         self.replace(self.current_size, key, **kwargs)
         self.current_size += 1
+
+    def save(self, filepath):
+        """ Writes stats to npz """
+        return np.save(filepath, stats)

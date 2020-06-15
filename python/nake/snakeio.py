@@ -10,6 +10,7 @@ class DirectoryNames(Enum):
     BRAIN = "brains"
     SNAKE = "snakes"
     FOODS = "foods"
+    STATS = "stats"
 
     @property
     def dir(self):
@@ -79,6 +80,21 @@ class Writer:
         snake.save(F, compressed=False)
         self.zip.writestr(filename, F.getbuffer())
         return filename
+
+    def write_stats(self, stats, name):
+        """ Writes stats to compresses zip"""
+        filename = DirectoryNames.STATS.join(name)
+        return self.write_numpy_arr(stats, filename)
+
+    def write_numpy_arr(self, arr, filename):
+        """ writes numpy arr to zip"""
+        if filename.endswith(".npy"):
+            filename += ".npy"
+        F = BytesIO()
+        np.save(F, arr)
+        self.zip.writestr(filename, F.getbuffer())
+        return filename
+
 
 
 class Reader:
