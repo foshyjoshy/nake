@@ -10,7 +10,7 @@ class VideoWriter:
 
     DEFAULT_FPS = 24
 
-    def __init__(self, file_path, input_width, input_height, override=True, fps=None, n_channels=0):
+    def __init__(self, file_path, input_width, input_height, override=True, fps=None, n_channels=0, vcodec=None):
 
         if not file_path == "-":
             if not override:
@@ -41,7 +41,7 @@ class VideoWriter:
             '-i', '-',
             '-an',
             #'-preset', 'veryslow'
-            '-vcodec', 'rawvideo',
+            '-vcodec', vcodec or 'rawvideo',
 
             self.file_path,
         ]
@@ -126,15 +126,15 @@ if __name__ == "__main__":
     # quit()
     #
     #
-    writer = VideoWriter(r"C:\\tmp\\test.mp4", 10, 10, n_channels=3)
-    for i in range(300):
-        arr = np.zeros([10, 10, 3], dtype=np.uint8)
-        index = np.unravel_index((i), arr.shape)
-        arr[index] = 255
-        print (writer.write_im(arr))
-
-    writer.close()
-    quit()
+    # writer = VideoWriter(r"C:\\tmp\\test.mp4", 10, 10, n_channels=3)
+    # for i in range(300):
+    #     arr = np.zeros([10, 10, 3], dtype=np.uint8)
+    #     index = np.unravel_index((i), arr.shape)
+    #     arr[index] = 255
+    #     print (writer.write_im(arr))
+    #
+    # writer.close()
+    # quit()
 
 
      #print (writer.write_im(arr))
@@ -147,14 +147,14 @@ if __name__ == "__main__":
     #     print (path)
     input_paths = []
     for i in range(1, 10000):
-        path = r"C:\\tmp\\generation.{:04d}.mp4".format(i)
+        path = r"C:\\tmp\\generation2.{:04d}.avi".format(i)
         if not os.path.exists(path):
             break
         input_paths.append(path)
 
     print (input_paths)
 
-    join_videos(r"C:\tmp\generation.mp4", *input_paths)
+    join_videos(r"C:\tmp\generation.avi", *input_paths)
 
 
 

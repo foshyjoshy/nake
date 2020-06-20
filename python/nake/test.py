@@ -11,6 +11,7 @@ import consts
 import matplotlib.pyplot as plt
 import numpy as np
 import time
+from run_stats import RunStats, RunStatsStash
 
 
 #TODO save out brain generators... add import brains into generated set. As fist or last brains
@@ -23,45 +24,47 @@ import time
 
 if __name__ == "__main__":
 
+    movesRemaining = 60
+    moves_increase_by = 90
     snake_01 = Snake.initializeAtPosition(
-        (5,5),
+        (15,15),
         direction=consts.Moves.DOWN,
         name="loop",
         history=True,
         length=4,
-        movesRemaining=36,
-        moves_increase_by=36,
+        movesRemaining=movesRemaining,
+        moves_increase_by=movesRemaining,
     )
 
     snake_02 = Snake.initializeAtPosition(
-        (5,5),
+        (15,15),
         direction=consts.Moves.UP,
         name="loop",
         history=True,
         length=4,
-        movesRemaining=36,
-        moves_increase_by=36,
+        movesRemaining=movesRemaining,
+        moves_increase_by=movesRemaining,
     )
     snake_03 = Snake.initializeAtPosition(
-        (5,5),
+        (15,15),
         direction=consts.Moves.LEFT,
         name="loop",
         history=True,
         length=4,
-        movesRemaining=36,
-        moves_increase_by=36,
+        movesRemaining=movesRemaining,
+        moves_increase_by=movesRemaining,
     )
     snake_04 = Snake.initializeAtPosition(
-        (5,5),
+        (15,15),
         direction=consts.Moves.RIGHT,
         name="loop",
         history=True,
         length=4,
-        movesRemaining=36,
-        moves_increase_by=36,
+        movesRemaining=movesRemaining,
+        moves_increase_by=movesRemaining,
     )
 
-    board = Board.fromDims(11, 11)
+    board = Board.fromDims(31, 31)
 
     #food_generator_01 = FoodGenerator(board, (1, 1), 434343)
     # scenario_01 = RunScenario(snake_01, food_generator_01)
@@ -82,19 +85,20 @@ if __name__ == "__main__":
     #     scenario_04
     # ]
 
+
     start_positions = [
         (1,1),
-        (1,9),
-        (9,1),
-        (9,9),
-        (3,3),
-        (3,7),
-        (7,3),
-        (7,7),
-        (1,5),
-        (5,1),
-        (5,9),
-        (9,5)
+        (1,29),
+        (29,1),
+        (29,29),
+        (10,10),
+        (10,20),
+        (20,10),
+        (20,20),
+        (1,15),
+        (15,1),
+        (15,29),
+        (29,15)
     ]
 
     randomState = np.random.RandomState(seed=34235)
@@ -111,8 +115,13 @@ if __name__ == "__main__":
 
     #"""
     # Creating a basic brain generator
-    brain = BasicBrain2.create(activation="leakyrelu", name="generator_input")
-    generator = BasicBrainGenerator(brain=brain, n_generate=5000)
+    brain = BasicBrain2.create(
+        activation="leakyrelu",
+        name="generator_input",
+        n_hidden_inputs=18,
+        n_hidden_layers=2,
+    )
+    generator = BasicBrainGenerator(brain=brain, n_generate=100)
     #"""
 
     # reader = Reader(r"C:\tmp\New folder\generation.0158.zip")
@@ -136,6 +145,12 @@ if __name__ == "__main__":
 
     scenario_score_weights = None
 
+    # Choosing initial scenarios
+    indexes = np.random.choice(len(full_scenarios), 10)
+    scenarios = full_scenarios#[full_scenarios[i] for i in indexes]
+    print ("Picked scenarios", indexes)
+
+
     generation = 0
     while True:
         generation += 1
@@ -143,16 +158,16 @@ if __name__ == "__main__":
 
         np.random.choice(5, 3)
 
-        draw_callback = FlexiDraw(11,11)
+        draw_callback = FlexiDraw(board.width, board.height)
 
-        indexes = np.random.choice(len(full_scenarios), 8)
-        scenarios = [full_scenarios[i] for i in indexes]
-        print ("Picked scenarios", indexes)
+        # indexes = np.random.choice(len(full_scenarios), 8)
+        # scenarios = [full_scenarios[i] for i in indexes]
+        # print ("Picked scenarios", indexes)
 
         # for scenario in scenarios:
-        #     scenario.callbacks = [FlexiDraw(11,11)]
+        #     scenario.callbacks = [FlexiDraw(board.width, board.height)]
 
-        im = np.zeros((11,11), dtype=np.uint8)
+        im = np.zeros((board.height,board.width), dtype=np.uint8)
         for scenario in scenarios:
             im[scenario.food_generator.pos[1], scenario.food_generator.pos[0]] = 255
         draw_callback.prepend_arrs.append(im)
@@ -177,7 +192,7 @@ if __name__ == "__main__":
             scenario_score_weights=scenario_score_weights,
         )
 
-        path = r"C:\tmp\generation2.{:04d}.zip".format(generation)
+        path = r"C:\tmp\generation.{:04d}.zip".format(generation)
         writer = Writer(path)
         for brain in brains:
             writer.write_brain(brain)
@@ -196,15 +211,50 @@ if __name__ == "__main__":
 
         # Creating generator
         generator = CrossoverBrainGenerator(
-            brains=brains[:4],
+            brains=brains[:2],
             n_generate=generator.n_generate,
         )
 
 
-        for idx in range(2)[::-1]:
+        for idx in range(1)[::-1]:
             print (idx)
+            default_count = 0
             for s_idx, stats in enumerate(full_stats_stash):
                 print (stats.get_stats_for_brain(brains[idx]))
+                if stats.get_stats_for_brain(brains[idx])[RunStats.LENGTH] == 4:
+                    default_count+=1
+            print ("Default count {}/{}".format(default_count, len(full_stats_stash)))
+
+        #Runn best brain over all scenarios
+
+        # scores = np.zeros(len(full_scenarios))
+        # for sidx, scenario in enumerate(full_scenarios):
+        #     for brain in generator.brains:
+        #         run_stats = scenario.run_brain(brain)
+        #         scores[sidx] += scorer.score_stats(**run_stats)
+        #
+
+        # print (np.sort(scores))
+        # print ("scenario indexes {}".format(np.argsort(scores)[:10]))
+        # scenarios = [full_scenarios[i] for i in np.argsort(scores)[:10]]
+
+        # indexes = np.random.choice(len(full_scenarios), 10)
+        # print ("Used indexes", indexes)
+        # scenarios = [full_scenarios[i] for i in indexes]
+
+        scenarios = full_scenarios
+        for scenario in scenarios:
+            new_food = FoodGenerator(
+                scenario.board,
+                scenario.food_generator._initialPos.copy()
+            )
+            scenario.food_generator = new_food
+
+
+
+        #quit()
+
+
 
         # scenario_snake_length = np.ones(len(scenarios))
         # for s_idx, stats in enumerate(full_stats_stash):
@@ -226,7 +276,7 @@ if __name__ == "__main__":
 
 
 
-        path = r"C:\tmp\generation2.{:04d}.avi".format(generation)
+        path = r"C:\tmp\generation.{:04d}.avi".format(generation)
         draw_callback.write(path)
         # for sidx, scenario in enumerate(scenarios):
         #     scenario.callbacks[0].write(r"C:\tmp\generation.{:04d}.{:02d}.mp4".format(generation, sidx))

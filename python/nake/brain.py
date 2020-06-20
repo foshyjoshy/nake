@@ -119,6 +119,11 @@ class BasicBrain(BrainBase):
     N_INPUTS = 14
 
 
+    INPUT_NAMES = [
+
+    ]
+
+
     def __init__(self, sequential_model, default_value=None, *args, **kwargs):
         assert isinstance(sequential_model, SequentialModel)
         self.sequential_model = sequential_model
@@ -129,15 +134,13 @@ class BasicBrain(BrainBase):
         return "{} {}".format(super().__str__(), self.sequential_model)
 
     @classmethod
-    def create(cls, n_hidden_inputs=24, n_outputs=4, activation=None, **kwargs):
+    def create(cls, n_hidden_inputs=24, n_outputs=4, n_hidden_layers=2, activation=None, **kwargs):
         """ Sets up a basic brain class"""
-        sequential_model = SequentialModel([
-                    Dense("input_layer", cls.N_INPUTS, n_hidden_inputs, activation=activation),
-                    Dense("hidden_00", n_hidden_inputs, n_hidden_inputs, activation=activation),
-                    Dense("hidden_01", n_hidden_inputs, n_hidden_inputs, activation=activation),
-                    Dense("output_layer", n_hidden_inputs, n_outputs, activation=activation),
-                         ])
-        return cls(sequential_model,**kwargs)
+        layers = [Dense("input_layer", cls.N_INPUTS, n_hidden_inputs, activation=activation)]
+        for i in range(n_hidden_layers):
+            layers.append(Dense("hidden_{:02d}".format(i), n_hidden_inputs, n_hidden_inputs, activation=activation))
+        layers.append(Dense("output_layer", n_hidden_inputs, n_outputs, activation=activation))
+        return cls(SequentialModel(layers), **kwargs)
 
     @classmethod
     def fromState(cls, state, arrs=None):

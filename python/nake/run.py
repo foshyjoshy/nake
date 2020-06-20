@@ -32,6 +32,12 @@ def run_snake(snake, brain, foodGenerator, board=None, callbacks=None):
 
         # Using brain to compute move
         move = Moves(brain.computeMove(snake, board, foodGenerator))
+        # Run any snake move computed callbacks
+        for callback in callbacks:
+            callback.snake_move_computed(
+                move, snake, brain, board, foodGenerator.pos
+            )
+
         # Moving snake
         snake.move(move)
 

@@ -84,7 +84,7 @@ class Writer:
     def write_stats(self, stats, name):
         """ Writes stats to compresses zip"""
         filename = DirectoryNames.STATS.join(name)
-        return self.write_numpy_arr(stats, filename)
+        return self.write_numpy_arr(stats.stats, filename) #TODO smarter
 
     def write_numpy_arr(self, arr, filename):
         """ writes numpy arr to zip"""
@@ -105,17 +105,20 @@ class Reader:
         self._brains_info = None
         self._snakes_info = None
         self._foods_info = None
+        self._stats_info = None
 
     def _generate_info_lists(self):
         """ """
         self._brains_info = []
         self._snakes_info = []
         self._foods_info = []
+        self._stats_info = []
 
         map_dirname2list = {
             DirectoryNames.BRAIN.value: self._brains_info,
             DirectoryNames.SNAKE.value: self._snakes_info,
             DirectoryNames.FOODS.value: self._foods_info,
+            DirectoryNames.STATS.value: self._stats_info,
         }
 
         for info in self.zip.infolist():
@@ -157,6 +160,13 @@ class Reader:
         if self._snakes_info is None:
             self._generate_info_lists()
         return self._snakes_info
+
+    @property
+    def stats_info(self):
+        """ Returns a list of the stats ZipInfo"""
+        if self._stats_info is None:
+            self._generate_info_lists()
+        return self._stats_info
 
     def read_bytesIO(self, file_path):
         """ Reads data into BytesIO"""

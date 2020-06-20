@@ -16,6 +16,10 @@ class CallbackBase(RegistryItemBase):
         """ call back before snake starts moving """
         pass
 
+    def snake_move_computed(self, move, snake, brain, board, food_position):
+        """ call back before snake moves """
+        pass
+
     def snake_moved(self, snake, brain, board, food_position):
         """ call back after snake is moved """
         pass

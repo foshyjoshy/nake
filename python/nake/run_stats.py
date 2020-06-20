@@ -79,3 +79,52 @@ class RunStatsStash:
     def save(self, filepath):
         """ Writes stats to npz """
         return np.save(filepath, stats)
+
+
+
+if __name__ == "__main__":
+
+    import os
+    import snakeio
+    from run_stats import RunStats
+    input_paths = []
+
+    total_lengths = []
+    lengths = []
+    max_lengths = []
+    for i in range(1, 10000):
+        path = r"C:\\tmp\\generation3.{:04d}.zip".format(i)
+        if not os.path.exists(path):
+            break
+        input_paths.append(path)
+
+
+        reader = snakeio.Reader(path)
+        length = 0
+        max_length  = 0
+        for sidc, stats_info in enumerate(reader.stats_info):
+            arr = reader.read_numpy(stats_info, True)
+            length += np.sum((arr[RunStats.LENGTH]))
+
+        lengths.append( length/(len(arr)*len(reader.stats_info)))
+
+        print (lengths[-1], path, max_length)
+        max_lengths.append(max_length)
+
+    import matplotlib.pyplot as plt
+    from scipy import interpolate as itp
+
+    plt.subplot(1,2,1)
+    plt.plot(lengths)
+
+    x = np.arange(len(lengths))
+    mytck, myu = itp.splprep([x, lengths], k=5)
+    xnew, ynew = itp.splev(np.linspace(0, 1, 1000), mytck)
+    plt.plot(xnew, ynew)
+
+
+    plt.subplot(1,2,2)
+    plt.plot(max_lengths)
+    plt.show()
+
+
