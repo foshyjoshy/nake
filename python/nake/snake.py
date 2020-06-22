@@ -391,7 +391,11 @@ class Snake():
     @classmethod
     def load(cls, filepath, name=None):
         """ Loads snake from npz path """
-        npfile = np.load(filepath, allow_pickle=True)
+        if isinstance(filepath, np.lib.npyio.NpzFile):
+            npfile = filepath
+        else:
+            npfile = np.load(filepath, allow_pickle=True)
+
         arrs = dict(npfile.items())
         state = arrs.pop(cls.STATE).item()
         if name is not None:

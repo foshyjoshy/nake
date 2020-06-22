@@ -132,6 +132,16 @@ class FoodGenerator():
         return self._pos
 
     @property
+    def x(self):
+        """ returns current x position"""
+        return self.pos[0]
+
+    @property
+    def y(self):
+        """ returns current y position"""
+        return self.pos[1]
+
+    @property
     def shape(self):
         return self.board.shape
 
@@ -188,7 +198,10 @@ class FoodGenerator():
     @classmethod
     def load(cls, filepath):
         """ Loads food from npz path """
-        npfile = np.load(filepath, allow_pickle=True)
+        if isinstance(filepath, np.lib.npyio.NpzFile):
+            npfile = filepath
+        else:
+            npfile = np.load(filepath, allow_pickle=True)
         arrs = dict(npfile.items())
         state = arrs.pop(cls.STATE).item()
         return cls(**state)

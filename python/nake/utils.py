@@ -33,7 +33,7 @@ def moves2Body(headPos, bodyPositions, angles=consts.ANGLES_45, moves=None, defa
 
 
 def moves2RectangleEdge(point, leftTop, rightBottom, moves=None):
-    """ Returns the number of moves to the left, top, right, bottom edge"""
+    """ Returns the number of moves to the top, right, bottom, left edge"""
     if moves is None:
         moves = np.zeros(4,  dtype=np.float32)
 

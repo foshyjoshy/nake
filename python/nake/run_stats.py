@@ -93,7 +93,7 @@ if __name__ == "__main__":
     lengths = []
     max_lengths = []
     for i in range(1, 10000):
-        path = r"C:\\tmp\\generation3.{:04d}.zip".format(i)
+        path = r"C:\\tmp\\generation_2.{:04d}.zip".format(i)
         if not os.path.exists(path):
             break
         input_paths.append(path)

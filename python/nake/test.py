@@ -24,7 +24,7 @@ from run_stats import RunStats, RunStatsStash
 
 if __name__ == "__main__":
 
-    movesRemaining = 60
+    movesRemaining = 90
     moves_increase_by = 90
     snake_01 = Snake.initializeAtPosition(
         (15,15),
@@ -105,7 +105,7 @@ if __name__ == "__main__":
 
     scenarios = []
     for start_position in start_positions:
-        for snake in [snake_01, snake_02, snake_03, snake_04]:
+        for snake in [snake_01]:#, snake_02, snake_03, snake_04]:
             seed = randomState.randint(0, 2 ** 32 - 1, dtype=np.uint32)
             food_generator = FoodGenerator(board, start_position, seed)
             scenario = RunScenario(snake, food_generator)
@@ -121,7 +121,7 @@ if __name__ == "__main__":
         n_hidden_inputs=18,
         n_hidden_layers=2,
     )
-    generator = BasicBrainGenerator(brain=brain, n_generate=100)
+    generator = BasicBrainGenerator(brain=brain, n_generate=2000)
     #"""
 
     # reader = Reader(r"C:\tmp\New folder\generation.0158.zip")
@@ -146,7 +146,7 @@ if __name__ == "__main__":
     scenario_score_weights = None
 
     # Choosing initial scenarios
-    indexes = np.random.choice(len(full_scenarios), 10)
+    indexes = np.unique(np.random.choice(len(full_scenarios), 10))
     scenarios = full_scenarios#[full_scenarios[i] for i in indexes]
     print ("Picked scenarios", indexes)
 
@@ -192,10 +192,13 @@ if __name__ == "__main__":
             scenario_score_weights=scenario_score_weights,
         )
 
-        path = r"C:\tmp\generation.{:04d}.zip".format(generation)
+        path = r"C:\tmp\generation_2.{:04d}.zip".format(generation)
         writer = Writer(path)
         for brain in brains:
             writer.write_brain(brain)
+
+        for ii, scenario in enumerate(scenarios):
+            writer.write_food(scenario.food_generator, "food_{:02d}".format(ii))
 
         writer.write_snake(snake_01, "snake_01")
         writer.write_snake(snake_02, "snake_02")
@@ -211,8 +214,9 @@ if __name__ == "__main__":
 
         # Creating generator
         generator = CrossoverBrainGenerator(
-            brains=brains[:2],
+            brains=brains[:4],
             n_generate=generator.n_generate,
+            mutate_rate=5
         )
 
 
@@ -238,11 +242,11 @@ if __name__ == "__main__":
         # print ("scenario indexes {}".format(np.argsort(scores)[:10]))
         # scenarios = [full_scenarios[i] for i in np.argsort(scores)[:10]]
 
-        # indexes = np.random.choice(len(full_scenarios), 10)
-        # print ("Used indexes", indexes)
-        # scenarios = [full_scenarios[i] for i in indexes]
+        indexes = np.unique(np.random.choice(len(full_scenarios), 10))
+        print ("Used indexes", indexes)
+        scenarios = full_scenarios# [full_scenarios[i] for i in indexes]
 
-        scenarios = full_scenarios
+         #scenarios = full_scenarios
         for scenario in scenarios:
             new_food = FoodGenerator(
                 scenario.board,
@@ -256,27 +260,27 @@ if __name__ == "__main__":
 
 
 
-        # scenario_snake_length = np.ones(len(scenarios))
-        # for s_idx, stats in enumerate(full_stats_stash):
-        #     scenario_stats = stats.get_stats_for_brain(brains[0])
-        #     scenario_snake_length[s_idx] = scenario_stats[RunStats.LENGTH]
-        #
-        #
-        # scenario_snake_length -= np.min(scenario_snake_length)
-        # if sum(scenario_snake_length) > 0:
-        #     scenario_snake_length *= (1.0/np.max(scenario_snake_length))
-        #     scenario_score_weights = 1-(scenario_snake_length)
-        #
-        #     scenario_score_weights = scenario_score_weights*0.7+0.3
-        #
-        # else:
-        #     scenario_score_weights = np.ones_like(scenario_snake_length)
+        scenario_snake_length = np.ones(len(scenarios))
+        for s_idx, stats in enumerate(full_stats_stash):
+            scenario_stats = stats.get_stats_for_brain(brains[0])
+            scenario_snake_length[s_idx] = scenario_stats[RunStats.LENGTH]
+
+
+        scenario_snake_length -= np.min(scenario_snake_length)
+        if sum(scenario_snake_length) > 0:
+            scenario_snake_length *= (1.0/np.max(scenario_snake_length))
+            scenario_score_weights = 1-(scenario_snake_length)
+
+            scenario_score_weights = scenario_score_weights*0.7+0.3
+
+        else:
+            scenario_score_weights = np.ones_like(scenario_snake_length)
 
 
 
 
 
-        path = r"C:\tmp\generation.{:04d}.avi".format(generation)
+        path = r"C:\tmp\generation_2.{:04d}.avi".format(generation)
         draw_callback.write(path)
         # for sidx, scenario in enumerate(scenarios):
         #     scenario.callbacks[0].write(r"C:\tmp\generation.{:04d}.{:02d}.mp4".format(generation, sidx))

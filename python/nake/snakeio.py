@@ -5,6 +5,10 @@ from enum import Enum
 import os
 from contextlib import contextmanager
 
+from brain import Brains
+from food import FoodGenerator
+from snake import Snake
+
 
 class DirectoryNames(Enum):
     BRAIN = "brains"
@@ -176,4 +180,26 @@ class Reader:
         """ Reads numpy file from zip"""
         return np.load(self.read_bytesIO(file_path), allow_pickle=allow_pickle)
 
+    def read_brain(self, file_info):
+        """ reads and returns a brain from input ZipInfo"""
+        return Brains.load(self.read_numpy(file_info))
 
+    def read_food(self, file_info):
+        """ reads and returns a food generator from input ZipInfo"""
+        return FoodGenerator.load(self.read_numpy(file_info))
+
+    def read_snake(self, file_info):
+        """ reads and returns a snake from input ZipInfo"""
+        return Snake.load(self.read_numpy(file_info))
+
+    def read_brain_via_index(self, brain_index):
+        """ reads and returns a snake from input brain info index"""
+        return self.read_brain(self.brains_info[brain_index])
+
+    def read_food_via_index(self, food_index):
+        """ reads and returns a food generator from input food info index"""
+        return self.read_food(self.foods_info[food_index])
+
+    def read_snake_via_index(self, snake_index):
+        """ reads and returns a snake from input snake info index"""
+        return self.read_snake(self.snake_info[snake_index])

@@ -32,6 +32,11 @@ class CallbackBase(RegistryItemBase):
 class TestCallback(CallbackBase):
     """ Test callback that prints"""
 
+    def snake_move_computed(self, move, snake, brain, board, food_position):
+        """ call back after snake is moved """
+        print ("snake_move_computed")
+        print (brain.sequential_model.input_arr)
+
     def snake_moved(self, snake, brain, board, food_position):
         """ call back after snake is moved """
         print ("TestCallback")

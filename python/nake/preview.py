@@ -49,9 +49,10 @@ class VideoWriter:
         self.proc = subprocess.Popen(
             self.command,
             stdin=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            #stdout=subprocess.PIPE
+            #stderr=subprocess.PIPE, #### THIS ERRORS OUT!!!
+            stdout=subprocess.DEVNULL
         )
+        self.frame_count = 0
 
     @classmethod
     def from_arr(cls, file_path, arr, **kwargs):
@@ -73,7 +74,13 @@ class VideoWriter:
     def write_im(self, im):
         """ write image """
         try:
-            return self.proc.stdin.write(im.tobytes())
+            #print( "ssssss")
+            result = self.proc.stdin.write(im.tobytes())
+            #print ("done", result)
+            self.frame_count += 1
+            # self.proc.stdin.flush()
+            #self.proc.stderr.flush()
+            return result
         except IOError as err:
             _, ffmpeg_error = self.proc.communicate()
             ffmpeg_error = ffmpeg_error.decode()
@@ -147,7 +154,7 @@ if __name__ == "__main__":
     #     print (path)
     input_paths = []
     for i in range(1, 10000):
-        path = r"C:\\tmp\\generation2.{:04d}.avi".format(i)
+        path = r"C:\\tmp\\generation.{:04d}.avi".format(i)
         if not os.path.exists(path):
             break
         input_paths.append(path)

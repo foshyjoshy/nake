@@ -119,9 +119,9 @@ class BasicBrain(BrainBase):
     N_INPUTS = 14
 
 
-    INPUT_NAMES = [
-
-    ]
+    # INPUT_NAMES = [
+    #
+    # ]
 
 
     def __init__(self, sequential_model, default_value=None, *args, **kwargs):
@@ -221,7 +221,7 @@ class BasicBrain2(BasicBrain):
         if food.isAvailable:
             utils.moves2Body(
                 snake.headPosition,
-                food.pos[..., None],
+                food.pos[None, ...],
                 consts.ANGLES_45,
                 moves=self.sequential_model.input_arr[4:12, 0],
                 default_value=self.default_value
