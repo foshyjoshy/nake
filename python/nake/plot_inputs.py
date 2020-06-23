@@ -11,7 +11,7 @@ import matplotlib.ticker as plticker
 from callbacks import CallbackBase,TestCallback
 import io
 
-file_path = r"C:\tmp\generation.0081.zip"
+file_path = r"C:\tmp\generation_2.0255.zip"
 
 reader = snakeio.Reader(file_path)
 
@@ -35,7 +35,7 @@ print (arrrr)
 arrrr = np.array(arrrr)
 
 index =  np.argmax(arrrr[:,0])
-print (index)
+print (arrrr[index])
 bidx = arrrr[index,1]
 fidx = arrrr[index,2]
 
@@ -219,7 +219,7 @@ class Check(CallbackBase):
         print (self.writer.frame_count)
 
 
-callback = Check( r"C:\tmp\test.mp4", board)
+callback = Check( r"C:\tmp\test_2.mp4", board)
 
 stats =scenario.run_brain(brain, callbacks=[callback])
 callback.writer.close()

@@ -92,8 +92,10 @@ if __name__ == "__main__":
     total_lengths = []
     lengths = []
     max_lengths = []
+    nums_qeual_4 = []
+
     for i in range(1, 10000):
-        path = r"C:\\tmp\\generation_2.{:04d}.zip".format(i)
+        path = r"C:\\tmp\\generation_3.{:04d}.zip".format(i)
         if not os.path.exists(path):
             break
         input_paths.append(path)
@@ -102,12 +104,14 @@ if __name__ == "__main__":
         reader = snakeio.Reader(path)
         length = 0
         max_length  = 0
+        nums_qeual = 0
         for sidc, stats_info in enumerate(reader.stats_info):
             arr = reader.read_numpy(stats_info, True)
             length += np.sum((arr[RunStats.LENGTH]))
+            nums_qeual += np.sum(arr[RunStats.LENGTH] > 4)
 
         lengths.append( length/(len(arr)*len(reader.stats_info)))
-
+        nums_qeual_4.append(nums_qeual)
         print (lengths[-1], path, max_length)
         max_lengths.append(max_length)
 
@@ -124,7 +128,7 @@ if __name__ == "__main__":
 
 
     plt.subplot(1,2,2)
-    plt.plot(max_lengths)
+    plt.plot(nums_qeual_4)
     plt.show()
 
 

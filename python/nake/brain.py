@@ -134,12 +134,12 @@ class BasicBrain(BrainBase):
         return "{} {}".format(super().__str__(), self.sequential_model)
 
     @classmethod
-    def create(cls, n_hidden_inputs=24, n_outputs=4, n_hidden_layers=2, activation=None, **kwargs):
+    def create(cls, n_hidden_inputs=24, n_outputs=4, n_hidden_layers=2, activation=None, use_bias=True, **kwargs):
         """ Sets up a basic brain class"""
-        layers = [Dense("input_layer", cls.N_INPUTS, n_hidden_inputs, activation=activation)]
+        layers = [Dense("input_layer", cls.N_INPUTS, n_hidden_inputs, activation=activation, use_bias=use_bias)]
         for i in range(n_hidden_layers):
-            layers.append(Dense("hidden_{:02d}".format(i), n_hidden_inputs, n_hidden_inputs, activation=activation))
-        layers.append(Dense("output_layer", n_hidden_inputs, n_outputs, activation=activation))
+            layers.append(Dense("hidden_{:02d}".format(i), n_hidden_inputs, n_hidden_inputs, activation=activation, use_bias=use_bias))
+        layers.append(Dense("output_layer", n_hidden_inputs, n_outputs, activation=activation, use_bias=use_bias))
         return cls(SequentialModel(layers), **kwargs)
 
     @classmethod

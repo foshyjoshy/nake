@@ -24,8 +24,8 @@ from run_stats import RunStats, RunStatsStash
 
 if __name__ == "__main__":
 
-    movesRemaining = 90
-    moves_increase_by = 90
+    movesRemaining = 75
+    moves_increase_by = 60
     snake_01 = Snake.initializeAtPosition(
         (15,15),
         direction=consts.Moves.DOWN,
@@ -118,8 +118,9 @@ if __name__ == "__main__":
     brain = BasicBrain2.create(
         activation="leakyrelu",
         name="generator_input",
-        n_hidden_inputs=18,
+        n_hidden_inputs=14,
         n_hidden_layers=2,
+        use_bias=False,
     )
     generator = BasicBrainGenerator(brain=brain, n_generate=2000)
     #"""
@@ -148,7 +149,7 @@ if __name__ == "__main__":
     # Choosing initial scenarios
     indexes = np.unique(np.random.choice(len(full_scenarios), 10))
     scenarios = full_scenarios#[full_scenarios[i] for i in indexes]
-    print ("Picked scenarios", indexes)
+    #print ("Picked scenarios", indexes)
 
 
     generation = 0
@@ -156,7 +157,6 @@ if __name__ == "__main__":
         generation += 1
         print ("Running generation {}".format(generation))
 
-        np.random.choice(5, 3)
 
         draw_callback = FlexiDraw(board.width, board.height)
 
@@ -192,7 +192,7 @@ if __name__ == "__main__":
             scenario_score_weights=scenario_score_weights,
         )
 
-        path = r"C:\tmp\generation_2.{:04d}.zip".format(generation)
+        path = r"C:\tmp\generation_3.{:04d}.zip".format(generation)
         writer = Writer(path)
         for brain in brains:
             writer.write_brain(brain)
@@ -216,7 +216,7 @@ if __name__ == "__main__":
         generator = CrossoverBrainGenerator(
             brains=brains[:4],
             n_generate=generator.n_generate,
-            mutate_rate=5
+            mutate_rate=10
         )
 
 
@@ -280,7 +280,7 @@ if __name__ == "__main__":
 
 
 
-        path = r"C:\tmp\generation_2.{:04d}.avi".format(generation)
+        path = r"C:\tmp\generation_3.{:04d}.avi".format(generation)
         draw_callback.write(path)
         # for sidx, scenario in enumerate(scenarios):
         #     scenario.callbacks[0].write(r"C:\tmp\generation.{:04d}.{:02d}.mp4".format(generation, sidx))
