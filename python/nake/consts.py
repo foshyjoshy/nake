@@ -5,6 +5,9 @@ DTYPE_SNAKE = np.int32
 PI2 = np.pi*2
 ANGLES_45 = range(0, 360, 45)
 
+RADAR_ANGLES_BOUNDS_45 = range(0, 405, 45)
+
+
 class Moves(bytes, Enum):
 
     def __new__(cls, arr):

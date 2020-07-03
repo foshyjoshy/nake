@@ -95,7 +95,7 @@ if __name__ == "__main__":
     nums_qeual_4 = []
 
     for i in range(1, 10000):
-        path = r"C:\\tmp\\generation_3.{:04d}.zip".format(i)
+        path = r"C:\\tmp\\generation_4.{:04d}.zip".format(i)
         if not os.path.exists(path):
             break
         input_paths.append(path)

@@ -118,12 +118,6 @@ class BasicBrain(BrainBase):
     DEFAULT_VALUE = "default_value"
     N_INPUTS = 14
 
-
-    # INPUT_NAMES = [
-    #
-    # ]
-
-
     def __init__(self, sequential_model, default_value=None, *args, **kwargs):
         assert isinstance(sequential_model, SequentialModel)
         self.sequential_model = sequential_model
@@ -211,8 +205,6 @@ class BasicBrain(BrainBase):
 class BasicBrain2(BasicBrain):
     """ Basic brain """
 
-    SEQUENTIAL_MODEL = "sequential_model"
-    DEFAULT_VALUE = "default_value"
     N_INPUTS = 20
 
     def computeMove(self, snake, board, food):
@@ -235,6 +227,73 @@ class BasicBrain2(BasicBrain):
         return self.sequential_model.compute()
 
 
+
+class RadarBrain(BasicBrain):
+    """ Basic 1d brian radar """
+
+    N_INPUTS = 12
+
+    def computeMove(self, snake, board, food):
+        """ Computes snakes move"""
+
+        points = np.arange(-1, board.width+1)
+        zeros = np.ones_like(points)*-1
+        val_max = np.ones_like(points)*board.width
+
+        p1 = np.stack([points, zeros], axis=1)
+        p2 = np.stack([zeros, points], axis=1)#[1:]
+        p3 = np.stack([points, val_max], axis=1)
+        p4 = np.stack([val_max, points], axis=1)#[:-1]
+
+        points = np.vstack([p1, p2, p3, p4, snake.bodyPositions])
+
+        moves_body = utils.radar_angles(
+            snake.headPosition,
+            points,
+            default_value=-1,
+        )
+
+        moves_food = utils.radar_angles(
+            snake.headPosition,
+            food,
+            default_value=-1,
+        )
+
+        moves_body = np.min(moves_body.reshape([8, -1]), axis=-1)
+        moves_body[np.isinf(moves_body)] = -1
+
+        moves_food = np.min(moves_food.reshape([4, -1]), axis=-1)
+        moves_food[np.isinf(moves_food)] = -1
+
+        self.sequential_model.input_arr[:8, 0] = moves_body
+        self.sequential_model.input_arr[8:, 0] = moves_food
+
+        return self.sequential_model.compute()
+
+
+        #print (self.sequential_model.input_arr)
+
+        # print (food)
+        # print (moves_food)
+        #
+        #
+        #
+        # import matplotlib.pyplot as plt
+        #
+        # hist = moves_food
+        # bin_edges = np.arange(45, 360 + 45, 90)
+        #
+        # n = len(bin_edges)
+        # width = 2 * np.pi / n
+        #
+        # ax = plt.subplot(1, 2, 1, polar=True)
+        # ax.set_theta_zero_location('N')
+        # ax.set_theta_direction('clockwise')
+        # bars = ax.bar(bin_edges * np.pi / 180 - width * 0.5, hist, width=width, bottom=0.0)
+        #
+        # ax = plt.subplot(1, 2, 2, polar=False)
+        # plt.imshow(snake.generatePreviewImage(board))
+        # plt.show()
 
 
 def crossover(name, *brains):

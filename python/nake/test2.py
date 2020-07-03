@@ -1,4 +1,4 @@
-from brain import Brains, BasicBrain2, CrossoverBrainGenerator, BasicBrainGenerator
+from brain import Brains, BasicBrain2, CrossoverBrainGenerator, BasicBrainGenerator,RadarBrain
 from snake import Snake, SnakeActions
 from board import Board
 from food import FoodGenerator
@@ -36,33 +36,33 @@ if __name__ == "__main__":
         moves_increase_by=movesRemaining,
     )
 
-    snake_02 = Snake.initializeAtPosition(
-        (15,15),
-        direction=consts.Moves.UP,
-        name="loop",
-        history=True,
-        length=4,
-        movesRemaining=movesRemaining,
-        moves_increase_by=movesRemaining,
-    )
-    snake_03 = Snake.initializeAtPosition(
-        (15,15),
-        direction=consts.Moves.LEFT,
-        name="loop",
-        history=True,
-        length=4,
-        movesRemaining=movesRemaining,
-        moves_increase_by=movesRemaining,
-    )
-    snake_04 = Snake.initializeAtPosition(
-        (15,15),
-        direction=consts.Moves.RIGHT,
-        name="loop",
-        history=True,
-        length=4,
-        movesRemaining=movesRemaining,
-        moves_increase_by=movesRemaining,
-    )
+    # snake_02 = Snake.initializeAtPosition(
+    #     (15,15),
+    #     direction=consts.Moves.UP,
+    #     name="loop",
+    #     history=True,
+    #     length=4,
+    #     movesRemaining=movesRemaining,
+    #     moves_increase_by=movesRemaining,
+    # )
+    # snake_03 = Snake.initializeAtPosition(
+    #     (15,15),
+    #     direction=consts.Moves.LEFT,
+    #     name="loop",
+    #     history=True,
+    #     length=4,
+    #     movesRemaining=movesRemaining,
+    #     moves_increase_by=movesRemaining,
+    # )
+    # snake_04 = Snake.initializeAtPosition(
+    #     (15,15),
+    #     direction=consts.Moves.RIGHT,
+    #     name="loop",
+    #     history=True,
+    #     length=4,
+    #     movesRemaining=movesRemaining,
+    #     moves_increase_by=movesRemaining,
+    # )
 
     board = Board.fromDims(31, 31)
 
@@ -87,10 +87,10 @@ if __name__ == "__main__":
 
 
     start_positions = [
-        (1,1),
-        (1,29),
-        (29,1),
-        (29,29),
+        #(1,1),
+        #(1,29),
+        #(29,1),
+        #(29,29),
         (10,10),
         (10,20),
         (20,10),
@@ -115,12 +115,12 @@ if __name__ == "__main__":
 
     #"""
     # Creating a basic brain generator
-    brain = BasicBrain2.create(
+    brain = RadarBrain.create(
         activation="leakyrelu",
         name="generator_input",
-        n_hidden_inputs=14,
+        n_hidden_inputs=21,
         n_hidden_layers=2,
-        use_bias=False,
+        use_bias=True,
     )
     generator = BasicBrainGenerator(brain=brain, n_generate=2000)
     #"""
@@ -192,7 +192,7 @@ if __name__ == "__main__":
             scenario_score_weights=scenario_score_weights,
         )
 
-        path = r"C:\tmp\generation_3.{:04d}.zip".format(generation)
+        path = r"C:\tmp\generation_5.{:04d}.zip".format(generation)
         writer = Writer(path)
         for brain in brains:
             writer.write_brain(brain)
@@ -201,9 +201,9 @@ if __name__ == "__main__":
             writer.write_food(scenario.food_generator, "food_{:02d}".format(ii))
 
         writer.write_snake(snake_01, "snake_01")
-        writer.write_snake(snake_02, "snake_02")
-        writer.write_snake(snake_03, "snake_03")
-        writer.write_snake(snake_04, "snake_04")
+        # writer.write_snake(snake_02, "snake_02")
+        # writer.write_snake(snake_03, "snake_03")
+        # writer.write_snake(snake_04, "snake_04")
         for idx, stats_stash in enumerate(full_stats_stash):
             writer.write_stats(stats_stash, "full_stats_{:02d}".format(idx))
 
@@ -214,9 +214,9 @@ if __name__ == "__main__":
 
         # Creating generator
         generator = CrossoverBrainGenerator(
-            brains=brains[:4],
+            brains=brains[:2],
             n_generate=generator.n_generate,
-            mutate_rate=10
+            mutate_rate=2.5
         )
 
 
@@ -271,16 +271,16 @@ if __name__ == "__main__":
             scenario_snake_length *= (1.0/np.max(scenario_snake_length))
             scenario_score_weights = 1-(scenario_snake_length)
 
-            scenario_score_weights = scenario_score_weights*0.7+0.3
+            scenario_score_weights = scenario_score_weights*0.3+0.7
 
         else:
             scenario_score_weights = np.ones_like(scenario_snake_length)
 
+        scenario_score_weights = np.ones_like(scenario_snake_length)
 
 
 
-
-        path = r"C:\tmp\generation_3.{:04d}.avi".format(generation)
+        path = r"C:\tmp\generation_5.{:04d}.avi".format(generation)
         draw_callback.write(path)
         # for sidx, scenario in enumerate(scenarios):
         #     scenario.callbacks[0].write(r"C:\tmp\generation.{:04d}.{:02d}.mp4".format(generation, sidx))

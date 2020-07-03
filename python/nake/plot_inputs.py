@@ -11,7 +11,7 @@ import matplotlib.ticker as plticker
 from callbacks import CallbackBase,TestCallback
 import io
 
-file_path = r"C:\tmp\generation_2.0255.zip"
+file_path = r"C:\tmp\generation_4.0177.zip"
 
 reader = snakeio.Reader(file_path)
 
@@ -161,13 +161,13 @@ class Check(CallbackBase):
 
         inputs =  brain.sequential_model.input_arr.flatten().copy()
         #inputs[inputs == -1] = np.nan
-        data = np.array([row_labels, inputs]).T
+        data = np.array([row_labels[:len(inputs)], inputs]).T
 
         fig, axs =plt.subplots(1,2, dpi=100, figsize=(10,5))
         axs[0].axis('off')
         #axs[1].axis('off')
         the_table = axs[0].table(
-            cellText=data,
+            cellText=inputs[None, ...],
             #rowLabels=row_labels,
             #colLabels=['',"inputs"],
             loc='center',
@@ -219,7 +219,7 @@ class Check(CallbackBase):
         print (self.writer.frame_count)
 
 
-callback = Check( r"C:\tmp\test_2.mp4", board)
+callback = Check( r"C:\tmp\test_12.mp4", board)
 
 stats =scenario.run_brain(brain, callbacks=[callback])
 callback.writer.close()
